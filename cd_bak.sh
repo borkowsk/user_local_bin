@@ -87,9 +87,9 @@ success=false
 while [ $attempt -le $max_attempts ]; do
     # Kopiujemy zawartość katalogu źródłowego do katalogu backupu, ale tylko nowe pliki.
     echo -e ${COLOR4}PASS $attempt
-    echo -e cp -aRu --verbose "$target_dir"/* "$backup_dir/" ${NORMCO}
+    echo -e cp -aRu --verbose "$target_dir"/. "$backup_dir/" ${NORMCO}
     echo
-    if cp -aRu --verbose "$target_dir"/* "$backup_dir/" ; then
+    if cp -aRu --verbose "$target_dir"/. "$backup_dir/" ; then
         success=true
         break
     else
