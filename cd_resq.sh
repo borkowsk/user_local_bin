@@ -61,6 +61,9 @@ elif [ $status_kod -eq 2 ]; then
     echo ddrescue -b 2048 -d -r 3 -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"
 else
     echo  -e ${COLERR}"Krytyczny błąd narzędzia ddrescue (kod: $status_kod). Przerywam."${NORMCO}
+    echo -e "\a\a\a\a\a\a\a"
     exit 1
 fi
+
+echo -e "Zakończono\a\a\a"
 

@@ -24,23 +24,23 @@ echo -e ${COLOR2}"Rozpoczynam modyfikację z zachowaniem oryginalnych czasów...
 find "$target_dir" -depth | while read -r item; do
     # Pobranie oryginalnego czasu modyfikacji (w formacie YYYY-MM-DD HH:MM:SS.fffffffff)
     # Użycie %y daje najwyższą precyzję (z nanosekundami), co w pełni chroni czasy
-    orig_time=$(stat -c %y "$item" 2>/dev/null)
+    orig_time=$(stat -c %y "$item" 2> /dev/null)
     # Analogicznie dla czasu dostępu
-    acce_time=$(stat -c %x "$item" 2>/dev/null)
+    acce_time=$(stat -c %x "$item" 2> /dev/null)
 
     # Zmiana uprawnień za pomocą przekazanych parametrów
-    chmod "$chmod_opts" "$item" 2>/dev/null
+    chmod --verbose "$chmod_opts" "$item" 2> /dev/null
 
     # Przywrócenie dokładnego czasu modyfikacji
     if [ -n "$orig_time" ]; then
-        touch -d "$orig_time" "$item" 2>/dev/null
+        touch -d "$orig_time" "$item" 2> /dev/null
     fi
 
     # Przywrócenie dokładnego czasu dostępu
     if [ -n "$acce_time" ]; then
-        touch -a -d "$acce_time" "$item" 2>/dev/null
+        touch -a -d "$acce_time" "$item" 2> /dev/null
     fi
 
-done
+    done
 
-echo "Zakończono pomyślnie."
+echo -e "Zakończono pomyślnie.\a\a\a"

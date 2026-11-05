@@ -110,5 +110,5 @@ else
     echo -e ${COLOR1}"Pomyślnie skopiowano zawartość z zachowaniem oryginalnych dat."${NORMCO}
 fi
 
-
+echo -e "Zakończono\a\a\a"
 
