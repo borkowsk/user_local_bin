@@ -12,7 +12,12 @@ namespace fs = std::filesystem;
 std::string get_file_type(const fs::path& filepath);
 
 // Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV
+// Zwraca liczbę przetworzonych plików.
 int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std::ofstream& out_tsv);
+
+// Funkcja parsująca wyjście z "unrar lt" i dopisująca wpisy do pliku TSV
+// Zwraca liczbę przetworzonych plików.
+int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
 // Funkcja pomocnicza do konwersji czasu modyfikacji pliku na czytelny format ISO (YYYY-MM-DD HH:MM:SS)
 std::string format_time(const fs::file_time_type& ftime) {
@@ -79,6 +84,10 @@ int main(int argc, char* argv[]) {
                     if(ftype == "ZIP!")
                     {
                         file_count+=process_zip_archive(entry.path(),target_dir,out);
+                    }
+                    else if(ftype == "RAR!")
+                    {
+                        file_count+=process_rar_archive(entry.path(),target_dir,out);
                     }
 
                     if (file_count % 1000 == 0)
