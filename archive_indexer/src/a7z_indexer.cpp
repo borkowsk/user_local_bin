@@ -19,7 +19,6 @@ namespace fs = std::filesystem;
 // Funkcja parsująca wyjście z "7z l -slt" i dopisująca wpisy do pliku TSV
 // Zwraca liczbę przetworzonych plików.
 int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, std::ofstream& out_tsv) {
-    // Użycie "7z l -slt" daje format blokowy, a "< /dev/null" chroni przed blokowaniem na plikach z hasłem
     std::string cmd = "7z l -slt \"" + archive_path.string() + "\" < /dev/null 2>/dev/null";
 
 #if defined(_WIN32)
@@ -29,7 +28,7 @@ int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, s
 #endif
 
     if (!pipe) {
-        std::cerr << "Blad: Nie udalo sie uruchomic polecenia dla archiwum 7Z: " << archive_path << "\n";
+        std::cerr << "Błąd: Nie udało się uruchomić polecenia dla archiwum 7Z: " << archive_path << "\n";
         return 0;
     }
 
@@ -41,9 +40,20 @@ int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, s
     std::string current_size = "";
     std::string current_mtime = "";
     std::string current_attributes = "";
+    bool is_first_block = true; // Flaga pomijająca nagłówek samego archiwum
 
     auto flush_entry = [&]() {
         if (!current_path.empty()) {
+            // Pierwszy blok w wyjściu 7z l -slt to metadane samego archiwum – pomijamy go
+            if (is_first_block) {
+                is_first_block = false;
+                current_path.clear();
+                current_size.clear();
+                current_mtime.clear();
+                current_attributes.clear();
+                return;
+            }
+
             // Sprawdzamy czy to katalog (atrybuty zawierają 'D' lub ścieżka kończy się na '/')
             bool is_dir = false;
             if (!current_attributes.empty() && current_attributes.find('D') != std::string::npos) {
@@ -113,4 +123,3 @@ int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, s
 
     return counter;
 }
-
