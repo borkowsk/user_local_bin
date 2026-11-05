@@ -1,0 +1,1 @@
+/// Konieczne definicje
