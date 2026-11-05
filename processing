@@ -1,0 +1,20 @@
+#!/bin/bash
+## URUCHAMIANIE Processing-u Z PARAMETREM PLIKU.
+## WYMAGA PEŁNEJ ŚCIEŻKI, A MECHANIZM EXTENSION ZWYKLE PODAJE RELATYWNĄ.
+## @authors W.T.Borkowski & GEMINI
+
+
+# Jeśli nie podano pliku, po prostu uruchom Processing czysty
+if [ -z "$1" ]; then
+    /opt/processing/bin/Processing
+    exit 0
+fi
+
+# Wyciągamy fizyczną, PEŁNĄ ścieżkę do katalogu, w którym leży plik
+REAL_FILE_PATH=$(readlink -f "$1")
+#DIR_PATH=$(dirname "$REAL_FILE_PATH")
+
+# Uruchamiamy natywną instalację z pełną ścieżką
+echo "OTWIERAM: $REAL_FILE_PATH"
+/opt/processing/bin/Processing "$REAL_FILE_PATH"
+
