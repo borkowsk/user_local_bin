@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
                     {
                         file_count+=process_rar_archive(entry.path(),target_dir,out);
                     }
-                    else if(ftype == "TAR!")
+                    else if(ftype == "TAR!" || ftype == "TGZ!")
                     {
                         file_count+=process_tar_archive(entry.path(),target_dir,out);
                     }
