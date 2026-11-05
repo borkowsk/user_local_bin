@@ -1,5 +1,6 @@
 /// @file
 /// @author GEMINI under direction of W.T.Borkowski
+
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -18,6 +19,10 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
 // Funkcja parsująca wyjście z "unrar lt" i dopisująca wpisy do pliku TSV
 // Zwraca liczbę przetworzonych plików.
 int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std::ofstream& out_tsv);
+
+// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV
+// Zwraca liczbę przetworzonych plików.
+int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
 // Funkcja pomocnicza do konwersji czasu modyfikacji pliku na czytelny format ISO (YYYY-MM-DD HH:MM:SS)
 std::string format_time(const fs::file_time_type& ftime) {
@@ -89,6 +94,10 @@ int main(int argc, char* argv[]) {
                     {
                         file_count+=process_rar_archive(entry.path(),target_dir,out);
                     }
+                    else if(ftype == "TAR!")
+                    {
+                        file_count+=process_tar_archive(entry.path(),target_dir,out);
+                    }
 
                     if (file_count % 1000 == 0)
                     {
@@ -101,7 +110,7 @@ int main(int argc, char* argv[]) {
             }
         }
     } catch (const std::exception& e) {
-        std::cerr << "\nBlad podczas iteracji: " << e.what() << "\n";
+        std::cerr << "\nBłąd podczas iteracji: " << e.what() << "\n";
     }
 
     out.close();

@@ -1,5 +1,9 @@
 /// @file
 /// Obsługa listowania ZIP/RAR/TAR/ARJ.
+/// @author GEMINI & Wpjciech T. Borkowski
+
+#include "trim.hpp"
+#include "indexer.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -12,26 +16,6 @@
 
 namespace fs = std::filesystem;
 
-// Usunięcie białych znaków z prawej strony
-inline std::string& rtrim(std::string& s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
-    return s;
-}
-
-// Usunięcie białych znaków z lewej strony
-inline std::string& ltrim(std::string& s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
-    return s;
-}
-
-// Obustronny trim
-inline std::string trim(std::string s) {
-    return ltrim(rtrim(s));
-}
 
 // Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV
 // Zwraca liczbę przetworzonych linii listy.
@@ -47,7 +31,7 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
 #endif
 
     if (!pipe) {
-        std::cerr << "Blad: Nie udalo sie uruchomic polecenia dla archiwum: " << zip_path << "\n";
+        std::cerr << "Błąd: Nie udało się uruchomić polecenia dla archiwum ZIP: " << zip_path << "\n";
         return 0;
     }
 
@@ -120,6 +104,9 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
                 if (!ext.empty() && ext[0] == '.') {
                     ext = ext.substr(1); // pomijamy kropkę, np. ".zip" -> "zip"
                 }
+
+                // Konwersja rozszerzenia na wielkie litery dla spójności w bazie
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
 
                 // Zapis w formacie TSV:
                 // ROZMIAR \t DATA_MOD \t TYP_KONTENERA \t ŚCIEŻKA_ZEWNĘTRZNA//ŚCIEŻKA_WEWNĘTRZNA

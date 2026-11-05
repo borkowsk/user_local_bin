@@ -5,16 +5,15 @@
 
 namespace fs = std::filesystem;
 
-// Pomocnicza funkcja sprawdzająca magiczne bajty dla znanych formatów archiwów
 std::string check_archive_magic_bytes(const fs::path& filepath)
 {
     std::ifstream file(filepath, std::ios::binary);
     if (!file.is_open())
         return "<err>";
 
-    // Wczytujemy pierwsze 8 bajtów (wystarczy do rozpoznania większości archiwów)
-    char buffer[8] = {0};
-    file.read(buffer, 8);
+    // Wczytujemy pierwsze 270 bajtów (potrzebne m.in. do sprawdzenia nagłówka ustar w TAR na offsecie 257)
+    char buffer[300] = {0};
+    file.read(buffer, 270);
     std::streamsize bytes_read = file.gcount();
 
     if (bytes_read >= 4) {
@@ -27,28 +26,34 @@ std::string check_archive_magic_bytes(const fs::path& filepath)
             return "RAR!";
         }
         // 7Z: 7z\xBC\xAF\x27\x1C (37 7A BC AF 27 1C)
-        if (bytes_read >= 6 && buffer[0] == 0x37 && buffer[1] == 0x7A && 
-            static_cast<unsigned char>(buffer[2]) == 0xBC && 
+        if (bytes_read >= 6 && buffer[0] == 0x37 && buffer[1] == 0x7A &&
+            static_cast<unsigned char>(buffer[2]) == 0xBC &&
             static_cast<unsigned char>(buffer[3]) == 0xAF) {
             return "7Z!";
         }
     }
-    
+
     if (bytes_read >= 2) {
         // ARJ: \x60\xEA
-        if (static_cast<unsigned char>(buffer[0]) == 0x60 && 
+        if (static_cast<unsigned char>(buffer[0]) == 0x60 &&
             static_cast<unsigned char>(buffer[1]) == 0xEA) {
             return "ARJ!";
         }
-        // GZ / TGZ: \x1F\x8B
-        if (static_cast<unsigned char>(buffer[0]) == 0x1F && 
+        // GZ / TGZ: \x1F\x8B (będą też łapać skompresowane tar.gz)
+        if (static_cast<unsigned char>(buffer[0]) == 0x1F &&
             static_cast<unsigned char>(buffer[1]) == 0x8B) {
             return "GZ!";
         }
     }
 
-    // Jeśli rozszerzenie twierdziło, że to archiwum, ale bajty nie pasują, 
-    // możemy zwrócić np. "UNKNOWN_CONTAINER" lub pusty string
+    // Sprawdzenie dla czystego TAR (nagłówek "ustar" znajduje się na offsecie 257)
+    if (bytes_read >= 262) {
+        if (buffer[257] == 'u' && buffer[258] == 's' && buffer[259] == 't' &&
+            buffer[260] == 'a' && buffer[261] == 'r') {
+            return "TAR!";
+        }
+    }
+
     return "";
 }
 
@@ -74,5 +79,5 @@ std::string get_file_type(const fs::path& filepath)
     }
 
     // 3. Dla zwykłych plików (TXT, JPG, CPP itp.) lub gdy archiwum nie miało standardowego nagłówka
-    return ext.empty() ? "NONE" : ext;
+    return ext.empty() ? "" : ext;
 }
