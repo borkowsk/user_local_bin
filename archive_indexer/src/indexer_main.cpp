@@ -20,9 +20,13 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
 // Zwraca liczbę przetworzonych plików.
 int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
-// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV
+// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV (działa też dla tgz)
 // Zwraca liczbę przetworzonych plików.
 int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std::ofstream& out_tsv);
+
+// Funkcja parsująca wyjście z "7z l -slt" i dopisująca wpisy do pliku TSV
+// Zwraca liczbę przetworzonych plików.
+int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
 // Funkcja pomocnicza do konwersji czasu modyfikacji pliku na czytelny format ISO (YYYY-MM-DD HH:MM:SS)
 std::string format_time(const fs::file_time_type& ftime) {
@@ -39,7 +43,7 @@ std::string format_time(const fs::file_time_type& ftime) {
 }
 
 void print_help(const char* prog_name) {
-    std::cout << "Uzycie: " << prog_name << " <sciezka_do_skanowania> <plik_wynikowy.tsv>\n";
+    std::cout << "Użycie: " << prog_name << " <scieżka_do_skanowania> <plik_wynikowy.tsv>\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -97,6 +101,10 @@ int main(int argc, char* argv[]) {
                     else if(ftype == "TAR!" || ftype == "TGZ!")
                     {
                         file_count+=process_tar_archive(entry.path(),target_dir,out);
+                    }
+                    else if(ftype == "7Z!")
+                    {
+                        file_count+=process_7z_archive(entry.path(),target_dir,out);
                     }
 
                     if (file_count % 1000 == 0)

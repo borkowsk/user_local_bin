@@ -8,6 +8,7 @@ add_executable( archivtool
     src/indexer.hpp
     src/trim.hpp
     src/file_types.cpp
+    src/a7z_indexer.cpp
     src/zip_indexer.cpp
     src/rar_indexer.cpp
     src/tar_indexer.cpp
