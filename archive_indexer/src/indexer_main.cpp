@@ -11,6 +11,9 @@ namespace fs = std::filesystem;
 // Główna funkcja okreslająca typ pliku
 std::string get_file_type(const fs::path& filepath);
 
+// Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV
+int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std::ofstream& out_tsv);
+
 // Funkcja pomocnicza do konwersji czasu modyfikacji pliku na czytelny format ISO (YYYY-MM-DD HH:MM:SS)
 std::string format_time(const fs::file_time_type& ftime) {
     // C++17 wymaga konwersji system_clock na czas kalendarzowy
@@ -56,8 +59,10 @@ int main(int argc, char* argv[]) {
     std::uintmax_t file_count = 0;
 
     try {
-        for (const auto& entry : fs::recursive_directory_iterator(target_dir, fs::directory_options::skip_permission_denied)) {
-            if (fs::is_regular_file(entry.status())) {
+        for (const auto& entry : fs::recursive_directory_iterator(target_dir, fs::directory_options::skip_permission_denied))
+        {
+            if (fs::is_regular_file(entry.status()))
+            {
                 try {
                     auto size = fs::file_size(entry);
                     auto ftime = fs::last_write_time(entry);
@@ -71,7 +76,13 @@ int main(int argc, char* argv[]) {
                     out << size << "\t" << time_str << "\t"<<ftype<<"\t" << rel_path.generic_string() << "\n";
                     file_count++;
 
-                    if (file_count % 1000 == 0) {
+                    if(ftype == "ZIP!")
+                    {
+                        file_count+=process_zip_archive(entry.path(),target_dir,out);
+                    }
+
+                    if (file_count % 1000 == 0)
+                    {
                         std::cout << "Przeskanowano plików: " << file_count << "...\r" << std::flush;
                     }
                 } catch (const std::exception& e) {
