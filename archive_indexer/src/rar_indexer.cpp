@@ -89,7 +89,7 @@ int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std:
             current_name = trim(line.substr(5));
         } else if (line.rfind("Size:", 0) == 0) {
             current_size = trim(line.substr(5));
-        } else if (line.rfind("Mtime:", 0) == 0) {
+        } else if (line.rfind("mtime:", 0) == 0) {
             current_mtime = trim(line.substr(6));
         }
     }
