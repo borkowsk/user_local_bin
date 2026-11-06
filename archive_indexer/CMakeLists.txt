@@ -15,3 +15,8 @@ add_executable( archivtool
     src/hasher.cpp
     src/indexer_main.cpp
 )
+
+add_executable( makeshortcuts
+    src/arch_extractor.cpp
+    src/integrator_main.cpp
+)
