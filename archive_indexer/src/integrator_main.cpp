@@ -5,19 +5,32 @@
 #include <filesystem>
 #include <cstdio>
 #include <array>
+#include <cstdlib>
 
 namespace fs = std::filesystem;
 
 bool verbose=true;
 
-// Deklaracja funkcji ekstrakcyjnej z osobnego modułu
+// Deklaracja funkcji ekstrakcyjnej z osobnego modułu.
 fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir);
 
 void print_help(const char* prog_name) {
     std::cout << "Użycie: " << prog_name << " <plik_indeksu.tsv> <tlsh|ssdeep> <katalog_bazowy_archiwow>\n";
 }
 
-int main(int argc, char* argv[]) {
+// Funkcja sprawdzająca, czy zewnętrzne narzędzie jest dostępne w systemie.
+bool is_tool_available(const std::string& tool_name) {
+#if defined(_WIN32)
+    std::string check_cmd = "where " + tool_name + " >/dev/null 2>/dev/null";
+#else
+    std::string check_cmd = "which " + tool_name + " >/dev/null 2>/dev/null || command -v " + tool_name + " >/dev/null 2>&1";
+#endif
+    int result = std::system(check_cmd.c_str());
+    return (result == 0);
+}
+
+int main(int argc, char* argv[])
+{
     // Wymagamy teraz 3 argumentów (program + 3 parametry)
     if (argc < 4) {
         print_help(argv[0]);
@@ -28,8 +41,15 @@ int main(int argc, char* argv[]) {
     std::string hash_type = argv[2];
     fs::path base_dir = argv[3]; // Jawnie wskazany katalog bazowy skanowanych danych
 
-    if (hash_type != "tlsh" && hash_type != "ssdeep") {
+    if (hash_type != "tlsh" && hash_type != "ssdeep" && hash_type != "file" ) {
         std::cerr << "Błąd: Nieznany rodzaj skrótu. Wybierz 'tlsh' lub 'ssdeep'.\n";
+        return 1;
+    }
+
+    // Walidacja dostępności zewnętrznego narzędzia CLI
+    if (!is_tool_available(hash_type)) {
+        std::cerr << "Błąd krytyczny: Narzędzie '" << hash_type << "' nie zostało znalezione w systemie (PATH)!\n";
+        std::cerr << "Upewnij się, że jest zainstalowane i dostępne w zmiennych środowiskowych.\n";
         return 1;
     }
 
@@ -55,7 +75,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Katalog tymczasowy na wypakowywane pliki
-    fs::path temp_dir = fs::temp_directory_path() / "archivtool_hashing_temp";
+    fs::path temp_dir = fs::temp_directory_path() / "hashed";
     fs::create_directories(temp_dir);
 
     std::ifstream in(index_tsv_path);
@@ -68,6 +88,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Katalog bazowy danych: " << base_dir << "\n";
     std::uintmax_t processed_count = 0;
 
+    unsigned file_count=0;
     while (std::getline(in, line)) {
         if (line.empty()) continue;
 
@@ -87,13 +108,16 @@ int main(int argc, char* argv[]) {
             if (fs::exists(physical_file) && fs::file_size(physical_file) > 0) {
                 std::string cmd;
                 if (hash_type == "tlsh") {
-                    cmd = "tlsh -r \"" + physical_file.string() + "\" 2>/dev/null";
+                    cmd = "tlsh -f \"" + physical_file.string() + "\" 2> ./pipe_errors.txt";
                 } else if (hash_type == "ssdeep") {
-                    cmd = "ssdeep -b \"" + physical_file.string() + "\" 2>/dev/null";
+                    cmd = "ssdeep -cb \"" + physical_file.string() + "\" 2> ./pipe_errors.txt | sed '1d'";
+                } else if (hash_type == "file") {
+                    cmd = "file \"" + physical_file.string() + "\" 2> ./pipe_errors.txt";
                 }
 
+                errno=0;
                 FILE* pipe = popen(cmd.c_str(), "r");
-                if (pipe)
+                if (errno==0 && pipe)
                 {
                     std::array<char, 512> buffer;
                     std::string hash_output = "";
@@ -103,14 +127,21 @@ int main(int argc, char* argv[]) {
                     pclose(pipe);
 
                     if (!hash_output.empty()) {
-                        out << path << "\t" << hash_output;
+                        out <<'"'<< path << "\"," << hash_output;
                     }
                 }
                 else
                 {
-                    std::cerr<<"Error opening pipe\'"<<errno<<"'"<<std::endl;
+                    std::cerr<<"Error opening pipe \'"<<cmd<<"'"<<std::endl;
                     perror("popen");
                 }
+            }
+
+            file_count++;
+
+            if (file_count<100 || file_count % 100 == 0)
+            {
+                std::cout << "\rOpracowano plików: " << file_count << "..." << std::flush;
             }
 
             std::error_code ec;
@@ -129,7 +160,7 @@ int main(int argc, char* argv[]) {
     //fs::remove_all(temp_dir, ec); //To może popsuć działanie innej kopii programu!!!
     //if(ec) std::cout<<"fs::remove return error code '"<<ec<<"'"<<std::endl;
 
-    std::cout << "Zakończono! Przetworzono wpisów: " << processed_count << "\n";
+    std::cout << "\nZakończono! Przetworzono wpisów: " << processed_count << "\n";
     std::cout << "Wynik zapisano do: " << output_hash_path << "\n";
 
     return 0;

@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 
                     if (file_count % 1000 == 0)
                     {
-                        std::cout << "Przeskanowano plików: " << file_count << "...\r" << std::flush;
+                        std::cout << "\rPrzeskanowano plików: " << file_count << "... " << std::flush;
                     }
                 } catch (const std::exception& e) {
                     // Ignorujemy pojedyncze pliki, do których brak dostępu (np. uprawnienia na starych płytach)
