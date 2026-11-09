@@ -1,6 +1,6 @@
 /// @file
-/// Obsługa listowania ZIP/RAR/TAR/ARJ.
-/// @author GEMINI & Wpjciech T. Borkowski
+/// @brief Obsługa listowania ZIP/RAR/TAR/ARJ.
+/// @author GEMINI & Wojciech T. Borkowski
 
 #include "trim.hpp"
 #include "indexer.hpp"
@@ -17,8 +17,8 @@
 namespace fs = std::filesystem;
 
 
-// Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV
-// Zwraca liczbę przetworzonych linii listy.
+/// Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV.
+/// Zwraca liczbę przetworzonych linii listy.
 int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std::ofstream& out_tsv) {
     // Przygotowanie komendy systemowej (zabezpieczenie cudzysłowem ścieżki przed spacjami)
     // UWAGA: Upewnij się, że w systemie dostępny jest program 'unzip'
@@ -35,7 +35,7 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
         return 0;
     }
 
-    std::array<char, 2048> buffer;
+    std::array<char, 2048> buffer{""};
     bool header_passed = false;
     bool separator_passed = false;
 
@@ -69,7 +69,7 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
 
         // Linia ma format: Length   Date   Time   Name
         // Przykład: "   1234  2005-06-12 14:30   katalog/plik.txt"
-        // Używamy stringstream do wyłuskania kolumn
+        // Używamy `stringstream` do wyłuskania kolumn
         std::stringstream ss(line);
         std::string size_str, date_str, time_str, internal_path;
 
@@ -79,10 +79,10 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
             // Pobieramy to, co zostało w strumieniu
             std::getline(ss, internal_path);
 
-            // Czyszczymy spacje z obu stron (pozbywamy się też ewentualnych '\r' od Windowsa)
+            // Czyścimy spacje z obu stron (pozbywamy się też ewentualnych '\r' od Windowsa)
             internal_path = trim(internal_path);
             
-            // Czyszczenie wiodącej spacji z getline
+            // Czyszczenie wiodącej spacji popranej z `getline`.
             if (!internal_path.empty() && internal_path[0] == ' ')
             {
                 internal_path = internal_path.substr(1);
@@ -96,7 +96,8 @@ int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std:
 
             if (!internal_path.empty())
             {
-                std::string full_datetime = date_str + " " + time_str + ":00"; // format YYYY-MM-DD HH:MM:SS
+                std::string full_datetime = date_str;
+                full_datetime += " " + time_str + ":00"; // format YYYY-MM-DD HH:MM:SS
                 
                 // 1. Szybka ścieżka: pobranie rozszerzenia
                 auto inter_path = fs::path{internal_path};

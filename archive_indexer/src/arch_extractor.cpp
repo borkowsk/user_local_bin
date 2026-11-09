@@ -1,3 +1,7 @@
+/// @file
+/// @brief Wypakowywanie pliku z archiwum.
+/// @author GEMINI, under the supervision of W. T. Borkowski
+
 #include <string>
 #include <filesystem>
 #include <random>
@@ -7,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-// Pomocnicza funkcja generująca losowy prefiks na wypadek kolizji nazw pliku
+/// Pomocnicza funkcja generująca losowy prefiks na wypadek kolizji nazw pliku.
 inline std::string generate_random_prefix() {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -15,9 +19,9 @@ inline std::string generate_random_prefix() {
     return std::to_string(dis(gen)) + "_";
 }
 
-// Funkcja ekstrahująca / przygotowująca plik do hashowania.
-// Przyjmuje ścieżkę z indeksu (np. "dir/file.txt" lub "archive.zip//file.txt"),
-// katalog bazowy archiwów oraz katalog docelowy.
+/// Funkcja ekstrahująca plik z archiwum.
+/// Przyjmuje ścieżkę z indeksu (np. "dir/file.txt" lub "archive.zip//file.txt")
+/// , katalog bazowy archiwów oraz katalog docelowy.
 fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir) {
     size_t separator_pos = entry_path_str.find("//");
     

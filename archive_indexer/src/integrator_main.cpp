@@ -9,16 +9,17 @@
 
 namespace fs = std::filesystem;
 
-bool verbose=true;
+//bool verbose=true;
 
-// Deklaracja funkcji ekstrakcyjnej z osobnego modułu.
+/// Deklaracja funkcji ekstrakcyjnej z archiwów.
 fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir);
 
+/// Wyświetla informacje o użyciu programu.
 void print_help(const char* prog_name) {
-    std::cout << "Użycie: " << prog_name << " <plik_indeksu.tsv> <tlsh|ssdeep> <katalog_bazowy_archiwow>\n";
+    std::cout << "Użycie: " << prog_name << " <plik_indeksu.tsv> <tlsh|ssdeep> <katalog_bazowy_archiwów>\n";
 }
 
-// Funkcja sprawdzająca, czy zewnętrzne narzędzie jest dostępne w systemie.
+/// Funkcja sprawdzająca, czy zewnętrzne narzędzie jest dostępne w systemie.
 bool is_tool_available(const std::string& tool_name) {
 #if defined(_WIN32)
     std::string check_cmd = "where " + tool_name + " >/dev/null 2>/dev/null";
@@ -31,7 +32,7 @@ bool is_tool_available(const std::string& tool_name) {
 
 int main(int argc, char* argv[])
 {
-    // Wymagamy teraz 3 argumentów (program + 3 parametry)
+    // Wymagamy teraz trzech argumentów (program + 3 parametry)
     if (argc < 4) {
         print_help(argv[0]);
         return 1;
@@ -84,7 +85,7 @@ int main(int argc, char* argv[])
     // Pomijamy nagłówek TSV
     std::getline(in, line);
 
-    std::cout << "Generowanie skrótów (" << hash_type << ") na podstawie: " << index_tsv_path << "\n";
+    std::cout << "Generowanie skrótów/opisów typu " << hash_type << " na podstawie: " << index_tsv_path << "\n";
     std::cout << "Katalog bazowy danych: " << base_dir << "\n";
     std::uintmax_t processed_count = 0;
 
@@ -101,14 +102,14 @@ int main(int argc, char* argv[])
             std::getline(ss, type, '\t') &&
             std::getline(ss, path, '\t')) {
 
-            // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego base_dir
+            // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego "base_dir"
             fs::path physical_file = prepare_file_for_hashing(path, base_dir, temp_dir);
             //if(verbose) std::cout<<path<<" "<<physical_file<<std::endl;
 
             if (fs::exists(physical_file) && fs::file_size(physical_file) > 0) {
                 std::string cmd;
                 if (hash_type == "tlsh") {
-                    cmd = "tlsh -f \"" + physical_file.string() + "\" 2> ./pipe_errors.txt";
+                    cmd = "tlsh -f \"" + physical_file.string() + "\" 2> ./pipe_errors.txt | sed 's/[[:space:]].*//'";
                 } else if (hash_type == "ssdeep") {
                     cmd = "ssdeep -cb \"" + physical_file.string() + "\" 2> ./pipe_errors.txt | sed '1d'";
                 } else if (hash_type == "file") {
@@ -119,8 +120,9 @@ int main(int argc, char* argv[])
                 FILE* pipe = popen(cmd.c_str(), "r");
                 if (errno==0 && pipe)
                 {
-                    std::array<char, 512> buffer;
-                    std::string hash_output = "";
+                    std::array<char, 512> buffer{""};
+                    std::string hash_output{};
+
                     while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
                         hash_output += buffer.data();
                     }

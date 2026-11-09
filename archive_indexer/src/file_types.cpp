@@ -1,3 +1,7 @@
+/// @file
+/// @brief Ustalanie typu pliku na podstawie rozszerzeń i magicznych bajtów
+/// @author GEMINI, under the supervision of W. T. Borkowski
+
 #include <string>
 #include <filesystem>
 #include <fstream>
@@ -5,6 +9,7 @@
 
 namespace fs = std::filesystem;
 
+/// Funkcja pomocnicza testująca magiczne bajty archiwów.
 std::string check_archive_magic_bytes(const fs::path& filepath)
 {
     std::ifstream file(filepath, std::ios::binary);
@@ -74,7 +79,7 @@ std::string check_archive_magic_bytes(const fs::path& filepath)
     return "";
 }
 
-// Główna funkcja okreslająca typ pliku
+/// Główna funkcja określająca typ pliku.
 std::string get_file_type(const fs::path& filepath)
 {
     // 1. Szybka ścieżka: pobranie rozszerzenia
