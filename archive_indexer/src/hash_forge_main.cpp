@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <array>
 #include <cstdlib>
+#include <random>
 
 namespace fs = std::filesystem;
 
@@ -33,6 +34,39 @@ bool is_tool_available(const std::string& tool_name) {
     int result = std::system(check_cmd.c_str());
     return (result == 0);
 }
+
+// --- PROCEDURA SPRAWDZAJĄCA PLIK BŁĘDÓW ---
+bool when_pipe_errors_logged(const std::string& error_log_path,const std::string context)
+{
+    if(fs::exists(error_log_path) && fs::file_size(error_log_path) > 0)
+    {
+        std::ifstream err_in(error_log_path);
+        std::string err_line;
+        bool reported_header = false;
+
+        while(std::getline(err_in, err_line))
+        {
+            if(!err_line.empty())
+            {
+                if(!reported_header)
+                {
+                    std::cerr << "[Błąd/Ostrzeżenie narzędzia w kontekście '" << context << "']";
+                    reported_header = true;
+                }
+                std::cerr << "  -> " << err_line << "\n";
+            }
+        }
+        err_in.close();
+
+        // Czyścimy plik błędów po odczytaniu, żeby nie kumulować śmieci z poprzednich iteracji
+        std::ofstream clear_err(error_log_path, std::ios::trunc);
+        clear_err.close();
+        return true; //Były jakieś błędy.
+    }
+
+    return false;
+}
+// ------------------------------------------
 
 int main(int argc, char* argv[])
 {
@@ -83,6 +117,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Generowanie unikalnej nazwy pliku błędów dla tej konkretnej instancji programu
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(100000, 999999);
+
+    fs::path error_log_path = fs::temp_directory_path() / ("hashforge_err_" + std::to_string(dis(gen)) + ".txt");
+
     // Katalog tymczasowy na wypakowywane pliki
     fs::path temp_dir = fs::temp_directory_path() / "hashed";
     fs::create_directories(temp_dir);
@@ -117,15 +158,15 @@ int main(int argc, char* argv[])
             if (fs::exists(physical_file) && fs::file_size(physical_file) > 0) {
                 std::string cmd;
                 if (hash_type == "tlsh") {
-                    cmd = "tlsh -f \"" + physical_file.string() + "\" 2> ./pipe_errors.txt | sed 's/[[:space:]].*//'";
+                    cmd = "tlsh -f \"" + physical_file.string() + "\" 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";
                 } else if (hash_type == "ssdeep") {
-                    cmd = "ssdeep -cb \"" + physical_file.string() + "\" 2> ./pipe_errors.txt | sed '1d'";
+                    cmd = "ssdeep -cb \"" + physical_file.string() + "\" 2> " + error_log_path.string() + " | sed '1d'";
                 } else if (hash_type == "file") {
-                    cmd = "file \"" + physical_file.string() + "\" 2> ./pipe_errors.txt";
+                    cmd = "file \"" + physical_file.string() + "\" 2> " + error_log_path.string();
                 } else if (hash_type == "md5" || hash_type == "sha256") {
                     // standardowe narzędzia coreutils zwracają: <hash>  <nazwa_pliku>
                     // Używamy sed, aby odciąć wszystko od pierwszej spacji i zostawić sam hash.
-                    cmd = hash_type + "sum \"" + physical_file.string() + "\" 2>/dev/null | sed 's/[[:space:]].*//'";
+                    cmd = hash_type + "sum \"" + physical_file.string() + "\" 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";
                 }
 
                 errno=0;
@@ -143,6 +184,8 @@ int main(int argc, char* argv[])
                     if (!hash_output.empty()) {
                         out <<'"'<< path << "\"," << hash_output;
                     }
+
+                    when_pipe_errors_logged(error_log_path.string(),path);
                 }
                 else
                 {
@@ -170,7 +213,10 @@ int main(int argc, char* argv[])
 
     out.close();
 
-    //std::error_code ec;
+    // Sprzątanie pliku błędów danej instancji
+    std::error_code ec;
+    fs::remove(error_log_path, ec);
+
     //fs::remove_all(temp_dir, ec); //To może popsuć działanie innej kopii programu!!!
     //if(ec) std::cout<<"fs::remove return error code '"<<ec<<"'"<<std::endl;
 
