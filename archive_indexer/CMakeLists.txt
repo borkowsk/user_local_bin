@@ -20,3 +20,20 @@ add_executable( hashforge
     src/arch_extractor.cpp
         src/hash_forge_main.cpp
 )
+
+# Pobranie ścieżki do katalogu domowego użytkownika
+set(DEST_DIR "$ENV{HOME}/.local/bin")
+
+# Upewnienie się, że katalog ~/.local/bin istnieje
+file(MAKE_DIRECTORY ${DEST_DIR})
+
+# Kopiowanie plików po zbudowaniu targetów
+add_custom_command(TARGET archivtool POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:archivtool> ${DEST_DIR}
+    COMMENT "Kopiowanie archivtool do ${DEST_DIR}"
+)
+
+add_custom_command(TARGET hashforge POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:hashforge> ${DEST_DIR}
+    COMMENT "Kopiowanie hashforge do ${DEST_DIR}"
+)
