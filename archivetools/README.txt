@@ -1,4 +1,4 @@
-archive_indexer/
+archivetools/
 ├── build.sh                  <-- Skrypt bash sterujący kompilacją z linii komend
 ├── CMakeLists.txt            <-- Konfiguracja kompilacji (kompatybilna wstecznie)
 ├── README.txt                <-- ten plik
