@@ -1,4 +1,9 @@
 archivtool
 makeshortcuts
 build/
+.idea/
+cmake-build-debug/
+cmake-build-minsizerel/
+cmake-build-release/
+cmake-build-relwithdebinfo/
 ._bak/
