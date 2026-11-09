@@ -16,7 +16,7 @@ add_executable( archivtool
     src/indexer_main.cpp
 )
 
-add_executable( makeshortcuts
+add_executable( hashforge
     src/arch_extractor.cpp
-    src/integrator_main.cpp
+        src/hash_forge_main.cpp
 )

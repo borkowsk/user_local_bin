@@ -1,3 +1,7 @@
+/// @file
+/// @brief Tworzenie tabel z hashami i inną dodatkową informacją/Creating tables with hashes and other additional information
+/// @author GEMINI, under the supervision of W. T. Borkowski
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
