@@ -46,13 +46,17 @@ int main(int argc, char* argv[])
     std::string hash_type = argv[2];
     fs::path base_dir = argv[3]; // Jawnie wskazany katalog bazowy skanowanych danych
 
-    if (hash_type != "tlsh" && hash_type != "ssdeep" && hash_type != "file" ) {
-        std::cerr << "Błąd: Nieznany rodzaj skrótu. Wybierz 'tlsh' lub 'ssdeep'.\n";
+    if (hash_type != "tlsh"
+       && hash_type != "ssdeep"
+       && hash_type != "sha256"
+       && hash_type != "md5"
+       && hash_type != "file" ) {
+        std::cerr << "Błąd: Nieznany rodzaj skrótu. Wybierz 'tlsh','ssdeep','sha256','md5' lub 'file'.\n";
         return 1;
     }
 
     // Walidacja dostępności zewnętrznego narzędzia CLI
-    if (!is_tool_available(hash_type)) {
+    if (!is_tool_available((hash_type!="md5"?hash_type:hash_type+"sum"))) {
         std::cerr << "Błąd krytyczny: Narzędzie '" << hash_type << "' nie zostało znalezione w systemie (PATH)!\n";
         std::cerr << "Upewnij się, że jest zainstalowane i dostępne w zmiennych środowiskowych.\n";
         return 1;
@@ -118,6 +122,10 @@ int main(int argc, char* argv[])
                     cmd = "ssdeep -cb \"" + physical_file.string() + "\" 2> ./pipe_errors.txt | sed '1d'";
                 } else if (hash_type == "file") {
                     cmd = "file \"" + physical_file.string() + "\" 2> ./pipe_errors.txt";
+                } else if (hash_type == "md5" || hash_type == "sha256") {
+                    // standardowe narzędzia coreutils zwracają: <hash>  <nazwa_pliku>
+                    // Używamy sed, aby odciąć wszystko od pierwszej spacji i zostawić sam hash.
+                    cmd = hash_type + "sum \"" + physical_file.string() + "\" 2>/dev/null | sed 's/[[:space:]].*//'";
                 }
 
                 errno=0;
