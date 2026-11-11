@@ -1,6 +1,7 @@
 archivtool
 hashforge
 makeshortcuts
+dupminer
 build/
 .idea/
 cmake-build-debug/
