@@ -15,10 +15,35 @@ usun_puste_pliki() {
 }
 
 # Funkcja zliczająca linie ze standardowego wejścia (stdin)
+# Koloruje swój wydruk jeżeli kolorowanie jest dostępne.
 # Parametr $1: całkowita liczba plików
 pokaz_postep() {
     local total="$1"
-    awk -v total="$total" '{ printf "[%d/%s] %s\n", NR, total, $0 }'
+    local c_num=""
+    local c_path=""
+    local c_reset=""
+
+    # 1. Sprawdzenie czy wyjście (stdout) to terminal oraz czy obsługuje kolory
+    if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
+        local colors
+        colors=$(tput colors 2>/dev/null || echo 0)
+        if [[ "$colors" -ge 8 ]]; then
+            c_num=$(tput setaf 6)    # Cyjan (jasnoniebieski) dla licznika
+            c_path=$(tput setaf 2)   # Zielony dla ścieżki
+            c_reset=$(tput sgr0)     # Reset formatowania
+        fi
+    fi
+
+    # 2. Przekazanie kodów (lub pustych stringów) do awk
+    awk -W interactive \
+        -v total="$total" \
+        -v c_num="$c_num" \
+        -v c_path="$c_path" \
+        -v c_reset="$c_reset" \
+        '{
+           printf "%s[%d/%s]%s %s%s%s\n", c_num, NR, total, c_reset, c_path, $0, c_reset
+           fflush()
+         }'
 }
 
 # Użyj podanego katalogu jako argumentu lub bieżącego katalogu
@@ -81,12 +106,16 @@ fi
 # Utworzenie struktury katalogów (jeśli nie istnieją)
 mkdir -p "$backup_dir"
 
+# WAŻNE: Aby "if" sprawdzał błąd każdego elementu pipe, a nie tylko ostatniego!
+set -o pipefail
+
 # Zapisanie odczytanej etykiety do pliku o nazwie 'label'
 echo "$label" > "$backup_dir/label"
 echo -e ${COLOR2}"Zapisano etykietę do:$COLOR1 $backup_dir/label"${NORMCO}
 
 # Kopiowanie zawartości z zachowaniem dat i atrybutów (cp -a) z mechanizmem ponawiania
-files2cp=`find "$target_dir"/  -type f -printf '.' | wc -c`
+echo "Sprawdzanie liczby plików..."
+files2cp=`find "$target_dir"/  -mindepth 1 -printf '.' | wc -c`
 echo -e ${COLOR1}"BACKUPOWANIE ZAWARTOŚCI... "${COLOR2}${files2cp}" plików"${NORMCO}
 max_attempts=3
 attempt=1
@@ -97,7 +126,7 @@ while [ $attempt -le $max_attempts ]; do
     echo -e ${COLOR4}PASS $attempt
     echo -e cp -aRu --verbose "$target_dir"/. "$backup_dir/" ${NORMCO}
     echo
-    if cp -aRu --verbose "$target_dir"/. "$backup_dir/" | pokaz_postep "$files2cp"; then
+    if stdbuf -oL cp -aRu --verbose "$target_dir"/. "$backup_dir/" | pokaz_postep "$files2cp"; then
         success=true
         break
     else
