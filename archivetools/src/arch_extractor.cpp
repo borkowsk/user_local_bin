@@ -2,6 +2,8 @@
 /// @brief Wypakowywanie pliku z archiwum.
 /// @author GEMINI, under the supervision of W. T. Borkowski
 
+#include "hash_forge.hpp"
+
 #include <string>
 #include <filesystem>
 #include <random>
@@ -22,7 +24,8 @@ inline std::string generate_random_prefix() {
 /// Funkcja ekstrahująca plik z archiwum.
 /// Przyjmuje ścieżkę z indeksu (np. "dir/file.txt" lub "archive.zip//file.txt")
 /// , katalog bazowy archiwów oraz katalog docelowy.
-fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir) {
+fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir)
+{
     size_t separator_pos = entry_path_str.find("//");
     
     fs::path filename_to_use;
@@ -46,10 +49,18 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::p
         fs::path src_path = base_dir / entry_path_str;
         std::error_code ec;
         if (fs::exists(src_path)) {
-            fs::copy_file(src_path, dest_path, fs::copy_options::overwrite_existing, ec);
+           fs::copy_file(src_path, dest_path, fs::copy_options::overwrite_existing, ec);
+           if(ec)
+           {
+               std::cerr<<"Nieudane kopiowanie do katalogu tymczasowego: "<<ec.message()<<std::endl;
+               std::cerr<<src_path<<" --> "<<dest_path<<std::endl;
+           }
         }
+        //std::cout<<"Zwykły plik:'"<<dest_path<<"'"<<std::endl;
         return dest_path;
     }
+
+    //std::cout<<"Plik do wypakowania:'"<<dest_path<<"'"<<std::endl;
 
     // Przypadek 2: Plik wewnątrz archiwum – wydobycie za pomocą narzędzia CLI na stdout
     std::string archive_rel = entry_path_str.substr(0, separator_pos);
@@ -63,22 +74,37 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::p
 
     std::string ext = full_archive_path.extension().string();
 
+    // Generowanie unikalnej nazwy pliku błędów dla tej konkretnej instancji programu
+    fs::path error_log_path = "./" + make_uniq_name("extraction_err_","txt",false);
+
     std::string cmd;
-    if (filename_lower.find(".tar.gz") != std::string::npos || filename_lower.find(".tgz") != std::string::npos) {
-        cmd = "tar -O -xzf \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>/dev/null";
+    if (filename_lower.find(".tar.gz") != std::string::npos || filename_lower.find(".tgz") != std::string::npos)
+    {
+        cmd = "tar -O -xzf \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2> " + error_log_path.string();
     } else if (ext == ".tar" || ext == ".TAR") {
-        cmd = "tar -O -xf \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>/dev/null";
+        cmd = "tar -O -xf \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>" + error_log_path.string();
     } else if (ext == ".zip" || ext == ".ZIP") {
-        cmd = "unzip -p \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>/dev/null";
+        cmd = "unzip -p \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>" + error_log_path.string();
     } else if (ext == ".rar" || ext == ".RAR") {
-        cmd = "unrar p -inul \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>/dev/null";
+        cmd = "unrar p -inul \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>" + error_log_path.string();
     } else if (ext == ".7z" || ext == ".7Z") {
-        cmd = "7z e -so \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>/dev/null";
+        cmd = "7z e -so \"" + full_archive_path.string() + "\" \"" + internal_path + "\" > \"" + dest_path.string() + "\" 2>" + error_log_path.string();
     }
 
     if (!cmd.empty()) {
         //std::cout<<cmd<<std::endl;
         std::system(cmd.c_str());
+        when_pipe_errors_logged(error_log_path.string(),entry_path_str);
+        std::error_code ec;
+        fs::remove(error_log_path, ec);
+        if(ec)
+        {
+            std::cerr<<"fs::remove "<<error_log_path.string()<<" zwróciło kod błędu '"<<ec<<"'"<<std::endl;
+        }
+    }
+    else
+    {
+        std::cerr<<"Nie mogę stworzyć polecenia wypakowującego dla '"<<entry_path_str<<"'"<<std::endl;
     }
 
     return dest_path;

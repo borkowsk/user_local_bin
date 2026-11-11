@@ -2,6 +2,8 @@
 /// @brief Tworzenie tabel z hashami i inną dodatkową informacją/Creating tables with hashes and other additional information
 /// @author GEMINI, under the supervision of W. T. Borkowski
 
+#include "hash_forge.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -17,15 +19,24 @@ namespace fs = std::filesystem;
 //bool verbose=true;
 
 /// Deklaracja funkcji ekstrakcyjnej z archiwów.
-fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir);
+fs::path prepare_file_for_hashing(const std::string& entry_path_str,
+                                  const fs::path& base_dir,
+                                  const fs::path& target_dir);
 
 /// Wyświetla informacje o użyciu programu.
-void print_help(const char* prog_name) {
-    std::cout << "Użycie: " << prog_name << " <plik_indeksu.tsv> <tlsh|ssdeep> <katalog_bazowy_archiwów>\n";
+void print_help(const char* prog_name,const char* version=nullptr)
+{
+    if(version)
+    {
+        std::cout<<"Wersja:"<<version<<std::endl;
+    }
+    std::cout << "Użycie:\n\t" << prog_name
+              << " <plik_indeksu.tsv> <tlsh|ssdeep|md5 etc> <katalog_bazowy_archiwów>\n";
 }
 
 /// Funkcja sprawdzająca, czy zewnętrzne narzędzie jest dostępne w systemie.
-bool is_tool_available(const std::string& tool_name) {
+bool is_tool_available(const std::string& tool_name)
+{
 #if defined(_WIN32)
     std::string check_cmd = "where " + tool_name + " >/dev/null 2>/dev/null";
 #else
@@ -35,8 +46,24 @@ bool is_tool_available(const std::string& tool_name) {
     return (result == 0);
 }
 
-// --- PROCEDURA SPRAWDZAJĄCA PLIK BŁĘDÓW ---
-bool when_pipe_errors_logged(const std::string& error_log_path,const std::string context)
+/// Generowanie unikalnej nazwy pliku błędów dla tej konkretnej instancji programu.
+std::string make_uniq_name(const std::string& base,const std::string& ext,bool in_tmp/*=true*/)
+{
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(100000, 999999);
+    std::string name=(in_tmp?fs::temp_directory_path():"");
+    name += "/";
+    name += base + std::to_string(dis(gen));
+    name +=  "."+ext;
+    return  name;
+}
+
+/// PROCEDURA SPRAWDZAJĄCA PLIK BŁĘDÓW I PRZEDRUKOWUJĄCA GO NA cerr
+bool when_pipe_errors_logged(const std::string& error_log_path,
+                             const std::string& context,
+                             const std::string& tool_name/*=""*/)
 {
     if(fs::exists(error_log_path) && fs::file_size(error_log_path) > 0)
     {
@@ -50,7 +77,7 @@ bool when_pipe_errors_logged(const std::string& error_log_path,const std::string
             {
                 if(!reported_header)
                 {
-                    std::cerr << "[Błąd/Ostrzeżenie narzędzia w kontekście '" << context << "']";
+                    std::cerr << "[Błąd/Ostrzeżenie narzędzia "<<tool_name<<" w kontekście '" << context << "']";
                     reported_header = true;
                 }
                 std::cerr << "  -> " << err_line << "\n";
@@ -66,13 +93,13 @@ bool when_pipe_errors_logged(const std::string& error_log_path,const std::string
 
     return false;
 }
-// ------------------------------------------
+
 
 int main(int argc, char* argv[])
 {
     // Wymagamy teraz trzech argumentów (program + 3 parametry)
     if (argc < 4) {
-        print_help(argv[0]);
+        print_help(argv[0],__TIMESTAMP__);
         return 1;
     }
 
@@ -118,14 +145,11 @@ int main(int argc, char* argv[])
     }
 
     // Generowanie unikalnej nazwy pliku błędów dla tej konkretnej instancji programu
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(100000, 999999);
-
-    fs::path error_log_path = fs::temp_directory_path() / ("hashforge_err_" + std::to_string(dis(gen)) + ".txt");
+    fs::path error_log_path = make_uniq_name("hashforge_err_","txt");
 
     // Katalog tymczasowy na wypakowywane pliki
-    fs::path temp_dir = fs::temp_directory_path() / "hashed";
+    //fs::path temp_dir = fs::temp_directory_path() / "hashed";
+    fs::path temp_dir = fs::current_path() / "tmp_hashed";
     fs::create_directories(temp_dir);
 
     std::ifstream in(index_tsv_path);
@@ -185,7 +209,7 @@ int main(int argc, char* argv[])
                         out <<'"'<< path << "\"," << hash_output;
                     }
 
-                    when_pipe_errors_logged(error_log_path.string(),path);
+                    when_pipe_errors_logged(error_log_path.string(),path,hash_type);
                 }
                 else
                 {

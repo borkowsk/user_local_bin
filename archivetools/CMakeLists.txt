@@ -17,8 +17,9 @@ add_executable( archivtool
 )
 
 add_executable( hashforge
+    src/hash_forge.hpp
     src/arch_extractor.cpp
-        src/hash_forge_main.cpp
+    src/hash_forge_main.cpp
 )
 
 # Pobranie ścieżki do katalogu domowego użytkownika
