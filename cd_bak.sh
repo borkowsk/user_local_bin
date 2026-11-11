@@ -14,6 +14,13 @@ usun_puste_pliki() {
     echo -e ${COLOR1}"Zakończono czyszczenie pustych plików."${NORMCO}
 }
 
+# Funkcja zliczająca linie ze standardowego wejścia (stdin)
+# Parametr $1: całkowita liczba plików
+pokaz_postep() {
+    local total="$1"
+    awk -v total="$total" '{ printf "[%d/%s] %s\n", NR, total, $0 }'
+}
+
 # Użyj podanego katalogu jako argumentu lub bieżącego katalogu
 target_dir="${1:-.}"
 target_dir=$(realpath "$target_dir")
@@ -79,7 +86,8 @@ echo "$label" > "$backup_dir/label"
 echo -e ${COLOR2}"Zapisano etykietę do:$COLOR1 $backup_dir/label"${NORMCO}
 
 # Kopiowanie zawartości z zachowaniem dat i atrybutów (cp -a) z mechanizmem ponawiania
-echo -e ${COLOR1}"BACKUPOWANIE ZAWARTOŚCI..."${NORMCO}
+files2cp=`find "$target_dir"/  -type f -printf '.' | wc -c`
+echo -e ${COLOR1}"BACKUPOWANIE ZAWARTOŚCI... "${COLOR2}${files2cp}" plików"${NORMCO}
 max_attempts=3
 attempt=1
 success=false
@@ -89,7 +97,7 @@ while [ $attempt -le $max_attempts ]; do
     echo -e ${COLOR4}PASS $attempt
     echo -e cp -aRu --verbose "$target_dir"/. "$backup_dir/" ${NORMCO}
     echo
-    if cp -aRu --verbose "$target_dir"/. "$backup_dir/" ; then
+    if cp -aRu --verbose "$target_dir"/. "$backup_dir/" | pokaz_postep "$files2cp"; then
         success=true
         break
     else
@@ -100,7 +108,6 @@ while [ $attempt -le $max_attempts ]; do
         sleep 2 # Krótka przerwa przed kolejną próbą
     fi
 done
-
 
 
 # Obsługa trwałego błędu po wyczerpaniu prób
