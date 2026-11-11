@@ -1,5 +1,6 @@
 /// @file
-/// @author GEMINI under direction of W.T.Borkowski
+/// @brief Indeksowanie plików w katalogu z uwzględnieniem zawartości archiwów / Indexing files in a directory, including the contents of archives
+/// @author GEMINI, under the supervision of W. T. Borkowski
 
 #include <iostream>
 #include <fstream>
@@ -9,26 +10,27 @@
 
 namespace fs = std::filesystem;
 
-// Główna funkcja okreslająca typ pliku
+//// Funkcja określająca typ pliku.
 std::string get_file_type(const fs::path& filepath);
 
-// Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV
-// Zwraca liczbę przetworzonych plików.
+/// Funkcja parsująca wyjście z "unzip -l" i dopisująca wpisy do pliku TSV.
+/// @return Zwraca liczbę przetworzonych plików.
 int process_zip_archive(const fs::path& zip_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
-// Funkcja parsująca wyjście z "unrar lt" i dopisująca wpisy do pliku TSV
-// Zwraca liczbę przetworzonych plików.
+/// Funkcja parsująca wyjście z "unrar lt" i dopisująca wpisy do pliku TSV.
+/// @return Zwraca liczbę przetworzonych plików.
 int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
-// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV (działa też dla tgz)
-// Zwraca liczbę przetworzonych plików.
+/// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV (działa też dla tgz).
+/// @return Zwraca liczbę przetworzonych plików.
 int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
-// Funkcja parsująca wyjście z "7z l -slt" i dopisująca wpisy do pliku TSV
-// Zwraca liczbę przetworzonych plików.
+/// Funkcja parsująca wyjście z "7z l -slt" i dopisująca wpisy do pliku TSV.
+/// @return Zwraca liczbę przetworzonych plików.
 int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, std::ofstream& out_tsv);
 
-// Funkcja pomocnicza do konwersji czasu modyfikacji pliku na czytelny format ISO (YYYY-MM-DD HH:MM:SS)
+/// Funkcja pomocnicza do konwersji czasu modyfikacji pliku na czytelny format ISO: "YYYY-MM-DD HH:MM:SS".
+/// @return Zwraca sformatowany czas.
 std::string format_time(const fs::file_time_type& ftime) {
     // C++17 wymaga konwersji system_clock na czas kalendarzowy
     auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
@@ -42,8 +44,9 @@ std::string format_time(const fs::file_time_type& ftime) {
     return buffer.str();
 }
 
+/// Wyświetla informacje o użyciu programu.
 void print_help(const char* prog_name) {
-    std::cout << "Użycie: " << prog_name << " <scieżka_do_skanowania> <plik_wynikowy.tsv>\n";
+    std::cout << "Użycie: " << prog_name << " <ścieżka_do_skanowania> <plik_wynikowy.tsv>\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -56,18 +59,18 @@ int main(int argc, char* argv[]) {
     fs::path output_tsv = argv[2];
 
     if (!fs::exists(target_dir) || !fs::is_directory(target_dir)) {
-        std::cerr << "Blad: Podana ścieżka nie istnieje lub nie jest katalogiem: " << target_dir << "\n";
+        std::cerr << "Błąd: Podana ścieżka nie istnieje lub nie jest katalogiem: " << target_dir << "\n";
         return 1;
     }
 
     std::ofstream out(output_tsv, std::ios::out | std::ios::trunc);
     if (!out.is_open()) {
-        std::cerr << "Blad: Nie mozna utworzyc pliku wynikowego: " << output_tsv << "\n";
+        std::cerr << "Błąd: Nie można utworzyć pliku wynikowego: " << output_tsv << "\n";
         return 1;
     }
 
     // Nagłówek TSV
-    out << "ROZMIAR\tDATA_MOD\tTYP\tSCIEZKA_WZGLĘDNA\n";
+    out << "ROZMIAR\tDATA_MOD\tTYP\tŚCIEŻKA_WZGLĘDNA\n";
 
     std::cout << "Skanowanie katalogu: " << target_dir << " ...\n";
     std::uintmax_t file_count = 0;
@@ -79,37 +82,37 @@ int main(int argc, char* argv[]) {
             {
                 try {
                     auto size = fs::file_size(entry);
-                    auto ftime = fs::last_write_time(entry);
-                    std::string time_str = format_time(ftime);
-                    auto ftype = get_file_type(entry.path());
+                    auto fileTime = fs::last_write_time(entry);
+                    std::string time_str = format_time(fileTime);
+                    auto fileType = get_file_type(entry.path());
 
                     // Ścieżka względna względem skanowanego katalogu
                     fs::path rel_path = fs::relative(entry.path(), target_dir);
 
                     // Zapis w formacie TSV: Rozmiar \t Czas \t Typ (RAW) \t Ścieżka
-                    out << size << "\t" << time_str << "\t"<<ftype<<"\t" << rel_path.generic_string() << "\n";
+                    out << size << "\t" << time_str << "\t" << fileType << "\t" << rel_path.generic_string() << "\n";
                     file_count++;
 
-                    if(ftype == "ZIP!")
+                    if(fileType == "ZIP!")
                     {
                         file_count+=process_zip_archive(entry.path(),target_dir,out);
                     }
-                    else if(ftype == "RAR!")
+                    else if(fileType == "RAR!")
                     {
                         file_count+=process_rar_archive(entry.path(),target_dir,out);
                     }
-                    else if(ftype == "TAR!" || ftype == "TGZ!")
+                    else if(fileType == "TAR!" || fileType == "TGZ!")
                     {
                         file_count+=process_tar_archive(entry.path(),target_dir,out);
                     }
-                    else if(ftype == "7Z!")
+                    else if(fileType == "7Z!")
                     {
                         file_count+=process_7z_archive(entry.path(),target_dir,out);
                     }
 
                     if (file_count % 1000 == 0)
                     {
-                        std::cout << "Przeskanowano plików: " << file_count << "...\r" << std::flush;
+                        std::cout << "\rPrzeskanowano plików: " << file_count << "... " << std::flush;
                     }
                 } catch (const std::exception& e) {
                     // Ignorujemy pojedyncze pliki, do których brak dostępu (np. uprawnienia na starych płytach)

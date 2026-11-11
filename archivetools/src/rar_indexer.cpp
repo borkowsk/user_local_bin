@@ -1,13 +1,13 @@
 /// @file
-/// Obsługa listowania ZIP/RAR/TAR/ARJ.
-/// @author GEMINI & Wpjciech T. Borkowski
+/// @brief Obsługa listowania RAR.
+/// @author GEMINI & Wojciech T. Borkowski
 
 #include "trim.hpp"
 #include "indexer.hpp"
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
+
 #include <string>
 #include <filesystem>
 #include <cstdio>
@@ -36,13 +36,13 @@ int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std:
         return 0;
     }
 
-    std::array<char, 2048> buffer;
+    std::array<char, 2048> buffer{""};
     fs::path rel_rar_path = fs::relative(rar_path, base_dir);
     int counter = 0;
 
-    std::string current_name = "";
-    std::string current_size = "";
-    std::string current_mtime = "";
+    std::string current_name{};
+    std::string current_size{};
+    std::string current_mtime{};
 
     // Lambda zapisująca zebrane dane pojedynczego pliku do pliku TSV
     auto flush_entry = [&]() {
@@ -79,7 +79,8 @@ int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std:
         }
     };
 
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+    {
         std::string line(buffer.data());
         line = trim(line);
 
@@ -93,6 +94,7 @@ int process_rar_archive(const fs::path& rar_path, const fs::path& base_dir, std:
             current_mtime = trim(line.substr(6));
         }
     }
+
     // Zapis ostatniego elementu w strumieniu
     flush_entry();
 

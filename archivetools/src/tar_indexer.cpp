@@ -1,6 +1,6 @@
 /// @file
-/// Obsługa listowania ZIP/RAR/TAR/ARJ.
-/// @author GEMINI & Wpjciech T. Borkowski
+/// @brief Obsługa listowania ZIP/RAR/TAR/ARJ.
+/// @author GEMINI & Wojciech T. Borkowski
 
 #include "trim.hpp"
 #include "indexer.hpp"
@@ -17,8 +17,8 @@
 namespace fs = std::filesystem;
 
 
-// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV
-// Zwraca liczbę przetworzonych plików.
+/// Funkcja parsująca wyjście z "tar -tvf" i dopisująca wpisy do pliku TSV.
+/// Zwraca liczbę przetworzonych plików.
 int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std::ofstream& out_tsv) {
     // Użycie "tar -tvf" – GNU tar automatycznie rozpoznaje kompresję (gzip, bz2 itp.)
     // Dodanie "< /dev/null" zabezpiecza przed ewentualnym blokowaniem strumienia wejściowego
@@ -35,7 +35,7 @@ int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std:
         return 0;
     }
 
-    std::array<char, 2048> buffer;
+    std::array<char, 2048> buffer{""};
     fs::path rel_tar_path = fs::relative(tar_path, base_dir);
     int counter = 0;
 
@@ -46,7 +46,7 @@ int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std:
         if (line.empty()) continue;
 
         // Standardowy format linii "tar -tvf" na Linuksie (GNU tar):
-        // -rw-r--r-- root/root       1234 2005-06-12 14:30 sciezka/do/pliku.txt
+        // -rw-r--r-- root/root       1234 2005-06-12 14:30 ścieżka/do/pliku.txt
         std::stringstream ss(line);
         std::string perms, owner_group, size_str, date_str, time_str, internal_path;
 
@@ -71,7 +71,8 @@ int process_tar_archive(const fs::path& tar_path, const fs::path& base_dir, std:
                 // Konwersja rozszerzenia na wielkie litery dla spójności w bazie
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
 
-                std::string full_datetime = date_str + " " + time_str + ":00"; // format YYYY-MM-DD HH:MM:SS
+                std::string full_datetime = date_str;
+                full_datetime += " " + time_str + ":00"; // format YYYY-MM-DD HH:MM:SS
 
                 // Zapis w formacie TSV:
                 // ROZMIAR \t DATA_MOD \t TYP \t ŚCIEŻKA_ZEWNĘTRZNA//ŚCIEŻKA_WEWNĘTRZNA

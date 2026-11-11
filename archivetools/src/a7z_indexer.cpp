@@ -1,13 +1,13 @@
 /// @file
-/// Obsługa listowania ZIP/RAR/TAR/ARJ/7z.
-/// @author GEMINI & Wpjciech T. Borkowski
+/// @brief Obsługa listowania ZIP/RAR/TAR/ARJ/7z.
+/// @author GEMINI, under the supervision of W. T. Borkowski
 
 #include "trim.hpp"
 #include "indexer.hpp"
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
+
 #include <string>
 #include <filesystem>
 #include <cstdio>
@@ -16,8 +16,8 @@
 
 namespace fs = std::filesystem;
 
-// Funkcja parsująca wyjście z "7z l -slt" i dopisująca wpisy do pliku TSV
-// Zwraca liczbę przetworzonych plików.
+/// Funkcja parsująca wyjście z "7z l -slt" i dopisująca wpisy do pliku TSV.
+/// Zwraca liczbę przetworzonych plików.
 int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, std::ofstream& out_tsv) {
     std::string cmd = "7z l -slt \"" + archive_path.string() + "\" < /dev/null 2>/dev/null";
 
@@ -32,14 +32,14 @@ int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, s
         return 0;
     }
 
-    std::array<char, 2048> buffer;
+    std::array<char, 2048> buffer{""};
     fs::path rel_path = fs::relative(archive_path, base_dir);
     int counter = 0;
 
-    std::string current_path = "";
-    std::string current_size = "";
-    std::string current_mtime = "";
-    std::string current_attributes = "";
+    std::string current_path{};
+    std::string current_size{};
+    std::string current_mtime{};
+    std::string current_attributes{};
     bool is_first_block = true; // Flaga pomijająca nagłówek samego archiwum
 
     auto flush_entry = [&]() {
@@ -54,7 +54,7 @@ int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, s
                 return;
             }
 
-            // Sprawdzamy czy to katalog (atrybuty zawierają 'D' lub ścieżka kończy się na '/')
+            // Sprawdzamy, czy to katalog (atrybuty zawierają 'D' lub ścieżka kończy się na '/')
             bool is_dir = false;
             if (!current_attributes.empty() && current_attributes.find('D') != std::string::npos) {
                 is_dir = true;

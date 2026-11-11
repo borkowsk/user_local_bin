@@ -1,0 +1,2 @@
+/// @file
+/// @brief Konieczne definicje

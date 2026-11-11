@@ -6,7 +6,7 @@
 #include <string>
 #include <algorithm>
 
-// Usunięcie białych znaków z prawej strony
+/// Usunięcie białych znaków z prawej strony.
 inline std::string& rtrim(std::string& s) {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
         return !std::isspace(ch);
@@ -14,7 +14,7 @@ inline std::string& rtrim(std::string& s) {
     return s;
 }
 
-// Usunięcie białych znaków z lewej strony
+/// Usunięcie białych znaków z lewej strony.
 inline std::string& ltrim(std::string& s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
         return !std::isspace(ch);
@@ -23,7 +23,7 @@ inline std::string& ltrim(std::string& s) {
 
 }
 
-// Obustronny trim
+/// Obustronny trim.
 inline std::string trim(std::string s) {
     return ltrim(rtrim(s));
 }
