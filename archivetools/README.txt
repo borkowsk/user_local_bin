@@ -1,27 +1,27 @@
 archivetools/
-├── build.sh                  <-- Skrypt bash sterujący kompilacją z linii komend
-├── CMakeLists.txt            <-- Konfiguracja kompilacji (kompatybilna wstecznie)
-├── README.txt                <-- ten plik
+├── build.sh                  <-- Bash script for controlling the command-line build
+├── CMakeLists.txt            <-- Build configuration (backward-compatible)
+├── README.txt                <-- this file
 └── src
-    ├── a7z_indexer.cpp       <-- Obsługa listowania ZIP/RAR/TAR/ARJ
-    ├── arch_extractor.cpp    <-- Funkcja wypakowująca pliki z archiwów
-    ├── dupl_miner_main.cpp   <-- Narzędzie wyszukujące duplikaty plików na podstawie hashy (`dupminer`)
-    ├── file_types.cpp        <-- Testowanie typów plików, zwłaszcza typów archiwów.
-    ├── hash_forge.hpp        <-- Nagłówki wspólnych funkcji pomocniczych dla `hashforge`
-    ├── hash_forge_main.cpp   <-- Narzędzie tworzące tablice hashy i informacji (tlsh,ssdeep,sha256,md5,file)
-    ├── hasher.cpp            <-- Lekka implementacja SHA-256
-    ├── indexer.hpp           <-- Niezbędne wspólne deklaracje
-    ├── indexer_main.cpp      <-- Indeksowanie katalogów z archiwami. Obsługa argumentów CLI i przechodzenie po katalogach (std::filesystem)
-    ├── rar_indexer.cpp       <-- Obsługa listowania ZIP/RAR/TAR/ARJ
-    ├── tar_indexer.cpp       <-- Obsługa listowania ZIP/RAR/TAR/ARJ
-    ├── trim.hpp              <-- Usuwanie spacji wokół łańcucha tekstowego
-    └── zip_indexer.cpp       <-- Obsługa listowania ZIP/RAR/TAR/ARJ
+    ├── a7z_indexer.cpp       <-- Handles listing ZIP/RAR/TAR/ARJ archives
+    ├── arch_extractor.cpp    <-- Function for extracting files from archives
+    ├── dupl_miner_main.cpp   <-- Tool for finding duplicate files based on hashes (`dupminer`)
+    ├── file_types.cpp        <-- Checks file types, especially archive types
+    ├── hash_forge.hpp        <-- Declarations of shared helper functions for `hashforge`
+    ├── hash_forge_main.cpp   <-- Tool for creating tables of hashes and file information (tlsh,ssdeep,sha256,md5,file)
+    ├── hasher.cpp            <-- Lightweight SHA-256 implementation
+    ├── indexer.hpp           <-- Required shared declarations
+    ├── indexer_main.cpp      <-- Indexes directories containing archives; handles CLI arguments and directory traversal (std::filesystem)
+    ├── rar_indexer.cpp       <-- Handles listing ZIP/RAR/TAR/ARJ archives
+    ├── tar_indexer.cpp       <-- Handles listing ZIP/RAR/TAR/ARJ archives
+    ├── trim.hpp              <-- Removes whitespace around a string
+    └── zip_indexer.cpp       <-- Handles listing ZIP/RAR/TAR/ARJ archives
 
-UŻYCIE:
-archivtool  sciezka/do/twoich/backupow   index_master.tsv
-hashforge   index_master.tsv  typ_hashu  sciezka/do/twoich/backupow
-dupminer    plik_z_hashami   [typ_hashu]
+USAGE:
+archivtool  path/to/your/backups   index_master.tsv
+hashforge   index_master.tsv  hash_type  path/to/your/backups
+dupminer    file_with_hashes   [hash_type]
 
-Przykład dla narzędzia dupminer:
+Example using `dupminer`:
 dupminer  backup.hash256
 
