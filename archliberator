@@ -1,0 +1,101 @@
+#!/bin/bash
+## Skrypt uwalniający archiwa uwięzione we wnetrzu innych archiwów. Wymaga pełnego pakietu 7z
+## @author GEMINI pod kierunkie W.Borkowski
+
+# 1. Sprawdzenie dostępności narzędzia 7z
+if ! command -v 7z >/dev/null 2>&1; then
+    echo "Błąd: Narzędzie '7z' nie jest zainstalowane w systemie." >&2
+    echo "Zainstaluj je w Ubuntu za pomocą polecenia:" >&2
+    echo "  sudo apt update && sudo apt install -y 7zip p7zip-rar arj" >&2
+    exit 1
+fi
+
+# 2. Sprawdzenie, czy podano parametr (ścieżkę do katalogu)
+if [[ -z "$1" ]]; then
+    echo "Błąd: Nie podano ścieżki do katalogu." >&2
+    echo "Użycie: $0 <ścieżka_do_katalogu>" >&2
+    exit 1
+fi
+
+wyciagnij_zagniezdzone_archiwa() {
+    echo -e $COLOR1 SZUKAM... $NORMCO
+    local root_dir="$1"
+
+    # Tablica pamiętająca już przeanalizowane pliki archiwów
+    declare -A processed
+
+    # Lista obsługiwanych masek dla 7z
+    local s7z_masks=(
+        "*.zip" "*.rar" "*.7z" "*.tar" "*.tgz"
+        "*.ZIP" "*.RAR" "*.7Z" "*.TAR" "*.TGZ"
+        "*.tar.gz" "*.tar.bz2" "*.tar.xz" "*.arj"
+        "*.TAR.GZ" "*.TAR.BZ2" "*.TAR.XZ" "*.ARJ"
+    )
+
+    # Wyrażenie regularne dla find i grep (ignorujące wielkość liter)
+    local regex_arch='\.(zip|rar|7z|tar|tgz|tar\.gz|tar\.bz2|tar\.xz|arj)$'
+
+    if [[ ! -d "$root_dir" ]]; then
+        echo "Błąd: Katalog '$root_dir' nie istnieje." >&2
+        return 1
+    fi
+
+    while true; do
+        local action_taken=0
+
+        # Szukamy wszystkich plików archiwów w całym drzewie
+        while IFS= read -r -d '' archive; do
+
+            # Pomijamy, jeśli to archiwum było już sprawdzone
+            if [[ -n "${processed[$archive]}" ]]; then
+                continue
+            fi
+
+            processed["$archive"]=1
+
+            # Sprawdzamy listę plików wewnątrz archiwum (7z l -slt)
+            #echo -e $COLOR1 7z l -slt -p"" "$archive" $NORMCO
+
+            if 7z l -slt -p"" "$archive" 2>/dev/null | grep -v -F -- "$archive" | grep -iE "^Path = .*${regex_arch}" ; then
+                echo -e $COLOR3
+                local dir
+                local base
+                local out_dir
+                dir=$(dirname "$archive")
+                base=$(basename "$archive")
+
+                # Tworzymy dedykowany folder pomocniczy z końcówką .archs
+                out_dir="${dir}/${base}.archs"
+
+                echo "Znaleziono zagnieżdżone archiwa w: $archive"
+                echo "  -> Wydobywam same archiwa do: $out_dir/"
+
+                echo -e $COLOR4 mkdir -p "$out_dir" $ERRCOL
+                mkdir -p "$out_dir"
+
+                echo -e $COLOR1 7z x -y -p"" -r -o"$out_dir" "$archive" "${s7z_masks[@]}"
+                echo -e $COLOR4
+                if 7z x -y -p"" -r -o"$out_dir" "$archive" "${s7z_masks[@]}" > /dev/null ; then
+                    find "$out_dir" -type d -empty -delete 2> /dev/null
+                    action_taken=1
+                else
+                    echo -e $ERRCOL"  -> BŁĄD (np. hasło lub uszkodzone archiwum): $archive" >&2
+                    rmdir "$out_dir" 2>/dev/null
+                fi
+
+                echo -e $NORMCO
+            fi
+
+        done < <(find "$root_dir" -type f -regextype posix-extended -iregex ".*${regex_arch}" -print0)
+
+        # Kończymy, gdy w całym przebiegu nie wydobyto już żadnego nowego archiwum
+        if [[ "$action_taken" -eq 0 ]]; then
+            echo "Gotowe! Wszystkie zagnieżdżone archiwa zostały wydobyte do katalogów *.archs"
+            break
+        fi
+    done
+}
+
+# Użycie:
+wyciagnij_zagniezdzone_archiwa "$1"
+
