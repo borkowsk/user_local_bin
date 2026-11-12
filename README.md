@@ -7,10 +7,10 @@ A small collection of useful Linux utilities for backups, permissions, Processin
 - `cd_backup` — copies a directory tree into a timestamped backup under `~/backups/`.
 - `cd_resque` — tries to recover a disk or block device using GNU `ddrescue`.
 - `chmod_r` — recursively changes permissions without disturbing file timestamps.
-- `processing` — launches Processing, optionally with a file path.
 - `datefixer` — recursively repairs old/broken directory timestamps using the newest item in each directory; ignores files named `label`.
 - `archliberator` — finds archives nested inside other archives and extracts them into sibling `<archive>.archs/` directories. Supports ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ, and ARJ archives; requires `7z` and its supported format plugins.
 - `archivetools/` — C++ utilities for indexing archive contents (`archivtool`), generating hashes (`hashforge`), and finding duplicate files (`dupminer`).
+- `processing` — launches Processing, optionally with a file path.
 
 ## Using the shell tools
 
