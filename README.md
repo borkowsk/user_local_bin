@@ -1,37 +1,49 @@
 # user_local_bin
 
-A small collection of useful Linux utilities for backups, permissions, Processing, and archive indexing.
+Mała kolekcja przydatnych narzędzi dla systemu Linux do tworzenia kopii zapasowych, zarządzania uprawnieniami, obsługi Processing oraz indeksowania archiwów.
 
-## Included tools
+## Zawarte narzędzia
 
-- `cd_backup` — copies a directory tree into a timestamped backup under `~/backups/`.
-- `cd_resque` — tries to recover a disk or block device using GNU `ddrescue`.
-- `chmod_r` — recursively changes permissions without disturbing file timestamps.
-- `datefixer` — recursively repairs old/broken directory timestamps using the newest item in each directory; ignores files named `label`.
-- `archliberator` — finds archives nested inside other archives and extracts them into sibling `<archive>.archs/` directories. Supports ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ, and ARJ archives; requires `7z` and its supported format plugins.
-- `archivetools/` — C++ utilities for indexing archive contents (`archivtool`), generating hashes (`hashforge`), and finding duplicate files (`dupminer`).
-- `processing` — launches Processing, optionally with a file path.
+- `cd_backup` — kopiuje drzewo katalogów do folderu z datą i czasem w katalogu `~/backups/`.
+- `cd_resque` — próbuje odzyskać dysk lub urządzenie blokowe za pomocą GNU `ddrescue`.
+- `chmod_r` — zmienia uprawnienia rekurencyjnie, nie naruszając znaczników czasu plików.
+- `datefixer` — rekurencyjnie naprawia stare lub uszkodzone daty katalogów na podstawie daty najnowszego elementu w każdym katalogu; pomija pliki o nazwie `label`.
+- `archliberator` — wyszukuje archiwa zagnieżdżone w innych archiwach i wydobywa je do sąsiednich katalogów `<archiwum>.archs/`. Obsługuje archiwa ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ i ARJ.
+- `archivetools/` — narzędzia w C++ do indeksowania zawartości archiwów (`archivtool`), generowania skrótów (`hashforge`) oraz wyszukiwania zduplikowanych plików (`dupminer`).
+- `processing` — uruchamia Processing, opcjonalnie z podaną ścieżką do pliku.
 
-## Using the shell tools
+## Używanie skryptów
 
 ```sh
-datefixer <directory>
-archliberator <directory>
+cd_backup [katalog]
+cd_resque <rdzeń_nazwy_pliku> [urządzenie_blokowe]
+chmod_r [katalog] [opcje_chmod]
+datefixer <katalog>
+archliberator <katalog>
+processing [plik]
 ```
 
-`datefixer` sets directory timestamps based on the newest direct child, traversing the tree from the deepest directories upward. If a directory has no eligible items, it receives the fallback timestamp `1970-01-02 00:00:00`.
+`cd_backup` kopiuje wskazany katalog, a jeśli nie podano argumentu — katalog bieżący, do `~/backups/<znacznik_czasu>/`. Znacznik czasu pochodzi z daty modyfikacji katalogu źródłowego. Skrypt zachowuje strukturę katalogów i uprawnienia plików.
 
-`archliberator` repeatedly extracts nested archives found under the given directory, placing extracted archive files in folders named after their source archive with the `.archs` suffix. Install `7z` and the plugins needed for the formats you want to process (on Ubuntu, the script suggests `7zip`, `p7zip-rar`, and `arj`).
+`cd_resque` używa GNU `ddrescue` do utworzenia obrazu ISO oraz pliku logu/mapy dla urządzenia blokowego. Wymagany rdzeń nazwy określa nazwy plików wynikowych; opcjonalne urządzenie blokowe domyślnie wybiera `/dev/sda`.
 
-## Build archive tools
+`chmod_r` rekurencyjnie stosuje podany tryb `chmod` do katalogu docelowego i jego zawartości. Bez argumentów używa katalogu bieżącego oraz trybu `u+w` (dodaje właścicielowi prawo zapisu). Po zakończeniu może zachować daty modyfikacji plików.
+
+`datefixer` ustawia datę każdego katalogu na datę jego najnowszego bezpośredniego elementu, przechodząc przez drzewo od najgłębszych katalogów. Pomija elementy o nazwie `label`. Jeśli katalog nie ma pasujących elementów, otrzymuje datę zapasową.
+
+`archliberator` wielokrotnie przeszukuje wskazane drzewo katalogów w poszukiwaniu zagnieżdżonych archiwów ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ i ARJ. Wydobywa z każdego archiwum wyodrębnione pliki i zapisuje je do katalogu sąsiadującego o nazwie `<archiwum>.archs/`.
+
+`processing` uruchamia instalację Processing z `/opt/processing/bin/Processing`. Po podaniu ścieżki do pliku przekształca ją na ścieżkę bezwzględną i przekazuje Processingowi do otwarcia.
+
+## Budowanie narzędzi archiwum
 
 ```sh
 cd archivetools
 ./build.sh
 ```
 
-This builds the tools and copies them to `~/.local/bin`. Make sure that directory is in your `PATH`.
+To buduje narzędzia i kopiuje je do `~/.local/bin`. Upewnij się, że ten katalog znajduje się w zmiennej `PATH`.
 
-For details and examples, see [`archivetools/README.txt`](archivetools/README.txt).
+Szczegółowe informacje i przykłady znajdziesz w pliku [`archivetools/README.txt`](archivetools/README.txt).
 
-[Przeczytaj po polsku](CZYTAJ_TO.md)
+[Read in English](README.md)
