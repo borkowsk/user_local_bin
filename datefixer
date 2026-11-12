@@ -1,0 +1,29 @@
+#!/bin/bash
+## Ustawia uszkodzone daty katalogów na datę najmłodszego pliku w danym katalogu.
+## Działa rekurencyjnie w całym wskazanym drzewie.
+## @author GEMINI pod kierunkiem W.Borkowski
+
+napraw_daty_katalogow() {
+    local root_dir="$1"
+    local fallback_date="1970-01-02 00:00:00"
+
+    find "$root_dir" -depth -type d ! -newermt "1970-01-01" -print0 | while IFS= read -r -d '' dir; do
+
+        # Dodano: ! -name "label", aby ignorować pliki etykiet backupu
+        newest=$(find "$dir" -mindepth 1 -maxdepth 1 ! -name "label" -newermt "1970-01-01" -printf "%T@ %p\n" | sort -n | tail -n 1 | cut -d' ' -f2-)
+
+        if [[ -n "$newest" ]]; then
+            touch -r "$newest" "$dir"
+            echo "Naprawiono datę: $dir (wzór: $(basename "$newest"))"
+        else
+            # Jeśli w katalogu był TYLKO plik 'label' (lub był całkowicie pusty),
+            # dostanie on datę bazową 1970-01-02 i nie zawyży dat katalogów wyżej
+            touch -d "$fallback_date" "$dir"
+            echo "Ustawiono datę bazową ($fallback_date) dla katalogu: $dir"
+        fi
+    done
+}
+
+# Użycie po zakończeniu backupu:
+napraw_daty_katalogow "$1"
+
