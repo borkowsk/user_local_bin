@@ -37,13 +37,14 @@ fi
 
 
 # Ścieżka do docelowego katalogu backupu w katalogu domowym użytkownika
-backup_dir="$HOME/backups/$safe_time"
+backup_dir="$HOME/backups/"
 
 # Przykładowe użycie ddrescue w skrypcie z obsługą kodów wyjścia:
 echo -e ${COLOR1}"Rozpoczynam ratowanie płyty za pomocą ddrescue..."${NORMCO}
 
 # Krok 1: Szybkie przejście ratunkowe
-ddrescue -b 2048 -n -v /dev/sr0 "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"
+echo -e ${COLOR2}ddrescue -b 2048 -n -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"${NORMCO}
+ddrescue -b 2048 -n -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"
 status_kod=$?
 
 # Analiza kodu powrotu
