@@ -20,14 +20,40 @@ fi
 # $2 - urządzenie blokowe (opcjonalny, domyślnie /dev/sr0)
 if [ -z "$1" ]; then
     echo -e ${COLERR}"Błąd: Nie podano rdzenia nazwy pliku!"${NORMCO} >&2
-    echo -e ${COLOR1}"Użycie:$NORMCO $0 <rdzeń_nazwy> [urządzenie_blokowe]" >&2
+    echo -e ${COLOR1}"Użycie:$NORMCO $0 <rdzeń_nazwy> [urządzenie_blokowe] [opcje]" >&2
     echo -e ${COLOR1}"Przykład:$NORMCO $0 stary_dysk /dev/sr0" >&2
     echo -e ${COLOR1}"Przykład (z domyślnym /dev/sr0):$NORMCO $0 stary_dysk" >&2
+    echo -e ${COLOR1}"Przykład pełny:$NORMCO $0 stary_dysk /dev/sr0 aggressive" >&2
     exit 1
 fi
 
 file_stem="$1"
-device="${2:-/dev/sr0}"
+
+# Odczyt drugiego parametru. Jeśli go brak ($2 jest pusty), przyjmujemy "default"
+device_param="${2:-default}"
+
+# Sprawdzamy, czy to "default", a jeśli nie – bierzemy dosłownie to, co podano
+if [ "$device_param" = "default" ]; then
+    device="/dev/sr0"
+else
+    device="$device_param"
+fi
+
+# Odczyt trzeciego parametru ($3).
+# Jeśli go brak ($3 jest pusty), domyślnie przyjmuje wartość "normal".
+param="${3:-normal}"
+
+case "$param" in
+    normal|default)
+        OPTIONS="-n"
+        ;;
+    aggressive)
+        OPTIONS="-d -r 3"
+        ;;
+    *)
+        OPTIONS="$param"
+        ;;
+esac
 
 # Sprawdzenie czy podane urządzenie faktycznie istnieje
 if [ ! -b "$device" ]; then
@@ -43,8 +69,8 @@ backup_dir="$HOME/backups/"
 echo -e ${COLOR1}"Rozpoczynam ratowanie płyty za pomocą ddrescue..."${NORMCO}
 
 # Krok 1: Szybkie przejście ratunkowe
-echo -e ${COLOR2}ddrescue -b 2048 -n -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"${NORMCO}
-ddrescue -b 2048 -n -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"
+echo -e ${COLOR2}ddrescue -b 2048 $OPTIONS -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"${NORMCO}
+ddrescue -b 2048 $OPTIONS -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"
 status_kod=$?
 
 # Analiza kodu powrotu
@@ -56,8 +82,9 @@ if [ $status_kod -eq 0 ]; then
     echo udisksctl unmount -b /dev/loopX
     echo udisksctl loop-delete -b /dev/loopX
     echo -e ${COLOR2}"Zamiast /dev/loopX wpisujesz urządzenie zwrócone podczas montowania."${NORMCO}
+    echo -e ${COLOR4}"UWAGA! Jeśli plik ISO wyprodukowany przed ten skrypt nie daje się zamontować, spróbuj podejrzeć zawartość bez montowania, np. za pomocą krusadera.\nA jeśli i to nie działa, możesz użyć photorec, który całowicie ignoruje system plików i odzyskuje zawartość, jednak bez nazw i zazwyczaj bez dat."${NORMCO}
 elif [ $status_kod -eq 2 ]; then
-    echo -e ${COLOR5}"Uwaga: Zgrano obraz ISO, ale napęd natrafił na nieczytelne sektory."
+    echo -e ${COLOR4}"Uwaga: Zgrano obraz ISO, ale napęd natrafił na nieczytelne sektory."
     echo -e "Możesz spróbować uruchomić drugą fazę (agresywną) z plikiem logu (skopiuj i uruchom poniższą linie)"${NORMCO}
     echo ddrescue -b 2048 -d -r 3 -v $device "$backup_dir/${file_stem}.iso" "$backup_dir/${file_stem}.log"
 else
