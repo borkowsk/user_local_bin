@@ -46,7 +46,9 @@ processing [plik]
 
 `archliberator` wielokrotnie przeszukuje wskazane drzewo katalogów w poszukiwaniu zagnieżdżonych archiwów ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ i ARJ. Zawartość każdego archiwum wypakowywana jest do sąsiedniego katalogu `<nazwa_archiwum>.archs/`. Zaszyfrowane archiwa są pomijane, a wypakowane pliki mogą zostać ponownie sprawdzone podczas kolejnych przebiegów.
 
-`processing` uruchamia zainstalowany plik wykonywalny Processing z `/opt/processing/bin/Processing`. Jeżeli podano ścieżkę do pliku, konwertuje ją do ścieżki bezwzględnej i przekazuje Processingowi w celu otwarcia.
+`...`
+
+`processing` uruchamia zainstalowany plik wykonywalny Processing z `/opt/processing/bin/Processing`. Jeżeli podano ścieżkę do pliku, konwertuje ją do ścieżki bezwzględnej i przekazuje Processingowi w celu otwarcia, co jest jedynym sposobem żeby Processing 4.x otworzył wskazane kody żródłowe - ścieżki względne nie działają.
 
 Szczegółowe informacje o narzędziach C++ znajdziesz w [`archivetools/README.txt`](archivetools/README.txt).
 
