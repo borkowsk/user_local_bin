@@ -10,7 +10,8 @@ A small collection of useful Linux utilities for backups, permissions, Processin
 - `datefixer` — recursively repairs old or broken directory timestamps using the newest item in each directory; ignores files named `label`.
 - `archliberator` — finds archives nested inside other archives and extracts them into sibling `<archive>.archs/` directories. Supports ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ, and ARJ archives.
 - `archivetools/` — C++ utilities for indexing archive contents (`archivtool`), generating checksums (`hashforge`), and finding duplicate files (`dupminer`).
-- `processing` — launches Processing, optionally with a file path.
+- ...
+- `processing` — launches Processing 4.x, optionally with a file path.
 
 ## Using the shell tools
 
@@ -33,7 +34,7 @@ processing [file]
 
 `archliberator` repeatedly scans the specified directory tree for nested ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ, and ARJ archives. It extracts each archive's contents into a sibling directory named `<archive>.archs/`.
 
-`processing` launches the installed Processing binary from `/opt/processing/bin/Processing`. If a file path is provided, it converts it to an absolute path and passes it to Processing for opening.
+`processing` launches the installed Processing binary from `/opt/processing/bin/Processing`. If a file path is provided, it converts it to an absolute path and passes it to Processing for opening, which is the only way to run Processing 4.x for particular source code.
 
 ## Build archive tools
 
