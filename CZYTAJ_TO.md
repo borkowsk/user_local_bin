@@ -10,6 +10,7 @@ Mała kolekcja przydatnych narzędzi dla systemu Linux do tworzenia kopii zapaso
 - `datefixer` — rekursywnie naprawia starsze lub niepoprawne znaczniki czasu katalogów na podstawie najnowszego elementu w każdym katalogu; pomija pliki o nazwie `label`.
 - `archliberator` — wyszukuje archiwa zagnieżdżone w innych archiwach i wypakowuje je do sąsiednich katalogów `<archiwum>.archs/`. Obsługuje ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ i ARJ.
 - `archivetools/` — narzędzia C++ do indeksowania zawartości archiwów (`archivtool`), tworzenia sum kontrolnych i innych skrótów plików (`hashforge`) oraz wyszukiwania zduplikowanych plików (`dupminer`).
+- ...
 - `processing` — uruchamia Processing 4.x, opcjonalnie z podaną ścieżką do pliku.
 
 ## Instalacja
