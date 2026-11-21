@@ -50,3 +50,10 @@ processing [file]
 For details about C++ tools, see [`archivetools/README.txt`](archivetools/README.txt).
 
 [Przeczytaj po polsku](CZYTAJ_TO.md)
+
+
+**COFFEE/KAFKA**
+
+* [PayPal](https://www.paypal.com/paypalme/wborkowsk)
+  OR
+* [Coffee](https://buycoffee.to/adalbertus)
