@@ -26,24 +26,20 @@ add_executable( dupminer
      src/dupl_miner_main.cpp
 )
 
-# Pobranie ścieżki do katalogu domowego użytkownika
-set(DEST_DIR "$ENV{HOME}/.local/bin")
-
-# Upewnienie się, że katalog ~/.local/bin istnieje
-file(MAKE_DIRECTORY ${DEST_DIR})
-
-# Kopiowanie plików po zbudowaniu targetów
+# Kopiowanie skompilowanych plików do katalogu archivetools/ (tam, gdzie leży CMakeLists.txt)
 add_custom_command(TARGET archivtool POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:archivtool> ${DEST_DIR}
-    COMMENT "Kopiowanie 'archivtool' do ${DEST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:archivtool> "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Kopiowanie 'archivtool' do ${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 add_custom_command(TARGET hashforge POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:hashforge> ${DEST_DIR}
-    COMMENT "Kopiowanie 'hashforge' do ${DEST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:hashforge> "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Kopiowanie 'hashforge' do ${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 add_custom_command(TARGET dupminer POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:dupminer> ${DEST_DIR}
-        COMMENT "Kopiowanie 'dupminer' do ${DEST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:dupminer> "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Kopiowanie 'dupminer' do ${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+

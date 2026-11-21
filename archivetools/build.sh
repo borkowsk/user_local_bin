@@ -1,9 +1,14 @@
-# (Umieść powyższy CMakeLists.txt w korzeniu)
+#!/bin/bash
 set -e
-echo MKDIR build/
+
+echo "Tworzę katalog build/..."
 mkdir -p build
 cd build
-echo CMAKE
+
+echo "Konfiguruję projekt (CMake)..."
 cmake ..
-echo MAKE
+
+echo "Kompiluję (make)..."
 make
+
+exit 0
