@@ -10,7 +10,8 @@ Mała kolekcja przydatnych narzędzi dla systemu Linux do tworzenia kopii zapaso
 - `datefixer` — rekurencyjnie naprawia stare lub uszkodzone daty katalogów na podstawie daty najnowszego elementu w każdym katalogu; pomija pliki o nazwie `label`.
 - `archliberator` — wyszukuje archiwa zagnieżdżone w innych archiwach i wydobywa je do sąsiednich katalogów `<archiwum>.archs/`. Obsługuje archiwa ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ i ARJ.
 - `archivetools/` — narzędzia w C++ do indeksowania zawartości archiwów (`archivtool`), generowania skrótów (`hashforge`) oraz wyszukiwania zduplikowanych plików (`dupminer`).
-- `processing` — uruchamia Processing, opcjonalnie z podaną ścieżką do pliku.
+- ...
+- `processing` — uruchamia Processing 4.x, opcjonalnie z podaną ścieżką do pliku.
 
 ## Używanie skryptów
 
@@ -33,7 +34,7 @@ processing [plik]
 
 `archliberator` wielokrotnie przeszukuje wskazane drzewo katalogów w poszukiwaniu zagnieżdżonych archiwów ZIP, RAR, 7z, TAR, TGZ, TAR.GZ, TAR.BZ2, TAR.XZ i ARJ. Wydobywa z każdego archiwum wyodrębnione pliki i zapisuje je do katalogu sąsiadującego o nazwie `<archiwum>.archs/`.
 
-`processing` uruchamia instalację Processing z `/opt/processing/bin/Processing`. Po podaniu ścieżki do pliku przekształca ją na ścieżkę bezwzględną i przekazuje Processingowi do otwarcia.
+`processing` uruchamia instalację Processing z `/opt/processing/bin/Processing`. Po podaniu ścieżki do pliku przekształca ją na ścieżkę bezwzględną i przekazuje Processingowi do otwarcia, co jest jedynym sposobem żeby Processing 4.x otworzył wskazane kody żródłowe - ścieżki względne nie działają.
 
 ## Budowanie narzędzi archiwum
 
