@@ -47,15 +47,6 @@ processing [file]
 
 `processing` launches the installed Processing binary from `/opt/processing/bin/Processing`. If a file path is provided, it converts it to an absolute path and passes it to Processing for opening.
 
-## Build archive tools
-
-```sh
-cd archivetools
-./build.sh
-```
-
-This builds the tools and leaves the executables in `archivetools/`. To install them, run `install.sh` from the repository root. Make sure the installation directory is in your `PATH`.
-
-For details and examples, see [`archivetools/README.txt`](archivetools/README.txt).
+For details about C++ tools, see [`archivetools/README.txt`](archivetools/README.txt).
 
 [Przeczytaj po polsku](CZYTAJ_TO.md)
