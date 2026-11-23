@@ -1,7 +1,7 @@
 archivetools/
 ├── build.sh                  <-- Skrypt bash sterujący kompilacją z linii komend
 ├── CMakeLists.txt            <-- Konfiguracja kompilacji (kompatybilna wstecznie)
-├── README.txt                <-- ten plik
+├── CZYTAJ_TO.txt             <-- ten plik
 └── src
     ├── a7z_indexer.cpp       <-- Obsługa listowania ZIP/RAR/TAR/ARJ
     ├── arch_extractor.cpp    <-- Funkcja wypakowująca pliki z archiwów
