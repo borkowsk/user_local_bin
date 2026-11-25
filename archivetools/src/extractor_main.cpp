@@ -4,13 +4,15 @@
 /// Ścieżki docelowe: Dla zwykłego pliku bierzemy PATH z TSV (np. dir/sub/plik.txt), dla elementu z archiwum
 /// (np. arch.zip//dir/sub/plik.txt) bierzemy ścieżkę wewnętrzną (dir/sub/plik.txt) i łączymy z target_dir.
 /// Kolizje nazw: Jeśli plik docelowy już istnieje, dokładamy do stem() przyrostek (001), (002), ...
-/// (z zachowaniem rozszerzenia, np. raport(001).pdf).
+/// (z zachowaniem rozszerzenia, np. raport(001).pdf). Jeśli plik jest dokładnie taki sam (wg. nazwy, rozmiaru i czasu)
+/// , jak któryś z plików juz znajdujących się w docelowym miejscu to nie jest kopiowany.
 /// Sortowanie i daty (DATE-TIME): Wpisujemy wiersze do tablicy, parsujemy DATE-TIME (obsługując typowe formaty
 /// YYYY-MM-DD HH:MM:SS oraz YYYY-MM-DDTHH:MM:SS / YYYY-MM-DD_HH:MM:SS) i sortujemy rosnąco po czasie.
 /// Ponieważ przetwarzamy pliki od najstarszego do najmłodszego, ustawienie `last_write_time` dla każdego wypakowanego
 /// pliku i jego katalogów nadrzędnych w trakcie przejścia naturalnie zostawi w każdym katalogu datę najmłodszego pliku
 /// w nim zawartego (a na koniec jeszcze wyrównujemy katalogi w kolejności od najgłębszych
 /// , na wypadek pustych podkatalogów lub rozjazdów).
+/// @authors GEMINI pod kierunkiem W.Borkowski
 /// @date 2026 (last modification)
 ///
 
@@ -35,6 +37,8 @@ struct IndexEntry {
     std::string datetime_str;
     std::string type_str;
     std::string path_str;
+    uintmax_t file_size = 0;
+    bool has_valid_size = false;
     bool has_valid_time = false;
     fs::file_time_type ftime{};
     size_t seq = 0;
@@ -111,6 +115,15 @@ bool parse_tsv_line(const std::string& line, IndexEntry& entry) {
     if (cols.size() < 4) return false;
 
     entry.size_str = trim_copy(cols[0]);
+
+    try {
+        size_t idx = 0;
+        entry.file_size = std::stoull(entry.size_str, &idx);
+        entry.has_valid_size = (idx == entry.size_str.size());
+    } catch (...) {
+        entry.has_valid_size = false;
+    }
+
     entry.datetime_str = trim_copy(cols[1]);
     entry.type_str = trim_copy(cols[2]);
 
@@ -149,26 +162,71 @@ fs::path extract_relative_dest_path(const std::string& entry_path_str, bool& is_
     return fs::path(rel);
 }
 
-/// Jeśli plik docelowy istnieje, zwraca ścieżkę z przyrostkiem (001), (002), ... do basename.
-fs::path resolve_collision_path(const fs::path& candidate) {
-    if (!fs::exists(candidate)) {
-        return candidate;
+/// Sprawdza, czy istniejący na dysku plik ma identyczny rozmiar i czas modyfikacji jak wpis TSV.
+bool is_same_file_metadata(const fs::path& existing_path, const IndexEntry& item) {
+    if (!item.has_valid_size || !item.has_valid_time) {
+        return false;
     }
 
-    fs::path parent = candidate.parent_path();
-    std::string stem = candidate.stem().string();
-    std::string ext = candidate.extension().string();
+    std::error_code ec;
+    if (!fs::is_regular_file(existing_path, ec) || ec) {
+        return false;
+    }
+
+    uintmax_t disk_size = fs::file_size(existing_path, ec);
+    if (ec || disk_size != item.file_size) {
+        return false;
+    }
+
+    auto disk_time = fs::last_write_time(existing_path, ec);
+    if (ec) {
+        return false;
+    }
+
+    // Tolerancja 2 sekund ze względu na zaokrąglenia czasu w formatach archiwów (np. ZIP/DOS)
+    auto diff = (disk_time > item.ftime) ? (disk_time - item.ftime) : (item.ftime - disk_time);
+    return diff <= std::chrono::seconds(2);
+}
+
+enum class DestAction {
+    Extract,
+    SkipIdentical
+};
+
+/// Ustala ścieżkę docelową lub wykrywa, że identyczny plik (nazwa, rozmiar, czas) już tam jest.
+DestAction resolve_destination(const fs::path& base_candidate, const IndexEntry& item, fs::path& out_path) {
+    if (!fs::exists(base_candidate)) {
+        out_path = base_candidate;
+        return DestAction::Extract;
+    }
+
+    if (is_same_file_metadata(base_candidate, item)) {
+        out_path = base_candidate;
+        return DestAction::SkipIdentical;
+    }
+
+    fs::path parent = base_candidate.parent_path();
+    std::string stem = base_candidate.stem().string();
+    std::string ext = base_candidate.extension().string();
 
     for (int idx = 1; idx <= 999999; ++idx) {
         std::ostringstream oss;
         oss << stem << "(" << std::setw(3) << std::setfill('0') << idx << ")" << ext;
         fs::path next_path = parent / oss.str();
+
         if (!fs::exists(next_path)) {
-            return next_path;
+            out_path = next_path;
+            return DestAction::Extract;
+        }
+
+        if (is_same_file_metadata(next_path, item)) {
+            out_path = next_path;
+            return DestAction::SkipIdentical;
         }
     }
 
-    return candidate;
+    out_path = base_candidate;
+    return DestAction::Extract;
 }
 
 /// Aktualizuje czas modyfikacji pliku oraz katalogów od pliku w górę aż do target_dir.
@@ -355,10 +413,11 @@ int main(int argc, char* argv[]) {
     });
     std::cout<<"ZROBIONO"<<'\n'<<std::endl;
 
+    std::cout<<"KOPIOWANIE..."<<std::flush<<std::endl;
     size_t restored_ok = 0;
+    size_t skipped_identical = 0;
     size_t restored_fail = 0;
 
-    std::cout<<"KOPIOWANIE..."<<std::flush<<std::endl;
     for (const auto& item : entries) {
         bool is_archive_item = false;
         fs::path rel_dest = extract_relative_dest_path(item.path_str, is_archive_item);
@@ -369,7 +428,13 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        fs::path dest_path = resolve_collision_path(target_dir / rel_dest);
+        fs::path dest_path;
+        DestAction action = resolve_destination(target_dir / rel_dest, item, dest_path);
+
+        if (action == DestAction::SkipIdentical) {
+            ++skipped_identical;
+            continue;
+        }
 
         if (extract_single_entry(item.path_str, is_archive_item, base_dir, dest_path)) {
             if (item.has_valid_time) {
@@ -380,13 +445,14 @@ int main(int argc, char* argv[]) {
             ++restored_fail;
         }
 
-        size_t sum=restored_ok+restored_fail;
+        size_t sum=restored_ok+restored_fail+skipped_identical;
         if(sum<10 || sum%5==0)
             std::cout<<"\rPlik nr "<<sum<<"         "<<std::flush;
     }
 
-    std::cout << "Ostatecznie odtworzono plików: " << restored_ok
-              << ", błędów/pominięć: " << restored_fail << std::endl;
+    std::cout << "Ostatecznie dtworzono plików: " << restored_ok
+              << ", pominięto identycznych: " << skipped_identical
+              << ", błędów: " << restored_fail << std::endl;
 
     return (restored_fail == 0) ? 0 : 2;
 }
