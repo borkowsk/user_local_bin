@@ -16,10 +16,18 @@ add_executable( archivtool
     src/indexer_main.cpp
 )
 
+add_executable( aextractor
+    src/hash_forge.hpp
+    src/extractor_main.cpp
+    src/arch_extractor.cpp
+    src/tool_funcs.cpp
+)
+
 add_executable( hashforge
     src/hash_forge.hpp
-    src/arch_extractor.cpp
     src/hash_forge_main.cpp
+    src/tool_funcs.cpp
+    src/arch_extractor.cpp
 )
 
 add_executable( dupminer
@@ -30,6 +38,11 @@ add_executable( dupminer
 add_custom_command(TARGET archivtool POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:archivtool> "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Kopiowanie 'archivtool' do ${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+add_custom_command(TARGET aextractor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:aextractor> "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMENT "Kopiowanie 'aextractor' do ${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 add_custom_command(TARGET hashforge POST_BUILD
