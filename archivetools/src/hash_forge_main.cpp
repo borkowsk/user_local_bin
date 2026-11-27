@@ -81,9 +81,9 @@ int main(int argc, char* argv[])
 
     // Tworzenie nazwy pliku wynikowego (np. "indeks.tsv" -na> "indeks.tlsh" / "indeks.ssdeep")
     // Plik wynikowy ląduje tam, gdzie plik indeksu (lub można to zmienić wg uznania)
-    fs::path output_hash_path = "/tmp/tymczasem_hashforge_debug"; //DEBUG
-    std::cerr<<COLOR.WR<<"UWAGA ! OUTPUT TYMCZASOWY DLA DEBUGGINGU - TRAFIA DO /tmp !!!"<<COLOR.NR<<std::endl;
-    //fs::path output_hash_path = index_tsv_path; //NORMAL
+    //fs::path output_hash_path = "/tmp/tymczasem_hashforge_debug"; //DEBUG
+    //std::cerr<<COLOR.WR<<"UWAGA ! OUTPUT TYMCZASOWY DLA DEBUGGINGU - TRAFIA DO /tmp !!!"<<COLOR.NR<<std::endl;
+    fs::path output_hash_path = index_tsv_path; //NORMAL
     output_hash_path.replace_extension("." + hash_type);
 
     std::ofstream out(output_hash_path, std::ios::out | std::ios::trunc);
