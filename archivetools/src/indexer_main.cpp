@@ -2,6 +2,7 @@
 /// @brief Indeksowanie plików w katalogu z uwzględnieniem zawartości archiwów / Indexing files in a directory, including the contents of archives
 /// @author GEMINI, under the supervision of W. T. Borkowski
 
+#include "term_colors.h"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -46,8 +47,11 @@ std::string format_time(const fs::file_time_type& ftime) {
 
 /// Wyświetla informacje o użyciu programu.
 void print_help(const char* prog_name) {
-    std::cout << "Użycie: " << prog_name << " <ścieżka_do_skanowania> <plik_wynikowy.tsv>\n";
+    std::cerr <<COLOR._1<< "Program do indeksowania zawartości katalogów wraz z archiwami pierwszego poziomu."<<COLOR.NR;
+    std::cerr << "Użycie: " << prog_name << " <ścieżka_do_indeksowania> <plik_wynikowy.tsv>"<<std::endl;
 }
+
+term_colors COLOR(true);
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
@@ -59,13 +63,15 @@ int main(int argc, char* argv[]) {
     fs::path output_tsv = argv[2];
 
     if (!fs::exists(target_dir) || !fs::is_directory(target_dir)) {
-        std::cerr << "Błąd: Podana ścieżka nie istnieje lub nie jest katalogiem: " << target_dir << "\n";
+        std::cerr <<COLOR.NR<< "Błąd: Podana ścieżka nie istnieje lub nie jest katalogiem: "
+                  <<COLOR._2<< target_dir << COLOR.NR <<std::endl;
         return 1;
     }
 
     std::ofstream out(output_tsv, std::ios::out | std::ios::trunc);
     if (!out.is_open()) {
-        std::cerr << "Błąd: Nie można utworzyć pliku wynikowego: " << output_tsv << "\n";
+        std::cerr <<COLOR.NR<< "Błąd: Nie można utworzyć pliku wynikowego: "
+                  <<COLOR._2<< output_tsv << COLOR.NR <<std::endl;
         return 1;
     }
 
@@ -121,7 +127,8 @@ int main(int argc, char* argv[]) {
             }
         }
     } catch (const std::exception& e) {
-        std::cerr << "\nBłąd podczas iteracji: " << e.what() << "\n";
+        std::cerr <<COLOR.NR<< "\nBłąd podczas iteracji: "
+                  <<COLOR._1<< e.what() << COLOR.NR <<std::endl;
     }
 
     out.close();

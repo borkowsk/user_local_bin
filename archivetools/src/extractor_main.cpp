@@ -12,10 +12,11 @@
 /// pliku i jego katalogów nadrzędnych w trakcie przejścia naturalnie zostawi w każdym katalogu datę najmłodszego pliku
 /// w nim zawartego (a na koniec jeszcze wyrównujemy katalogi w kolejności od najgłębszych
 /// , na wypadek pustych podkatalogów lub rozjazdów).
-/// @authors GEMINI pod kierunkiem W.Borkowski
+/// @authors GEMINI pod kierunkiem W. Borkowski
 /// @date 2026 (last modification)
 ///
 
+#include "term_colors.h"
 #include "hash_forge.hpp"
 
 #include <algorithm>
@@ -234,7 +235,8 @@ void apply_timestamps_upwards(const fs::path& file_path, const fs::path& target_
     std::error_code ec;
     fs::last_write_time(file_path, ftime, ec);
     if (ec) {
-        std::cerr << "Uwaga: nie udało się ustawić czasu pliku '" << file_path << "': " << ec.message() << "\n";
+        std::cerr <<COLOR.ER<< "Uwaga: nie udało się ustawić czasu pliku '"
+                  <<COLOR._2<< file_path << "': " << ec.message() << COLOR.NR << std::endl;
     }
 
     fs::path norm_target = fs::weakly_canonical(target_dir, ec);
@@ -260,20 +262,25 @@ bool extract_single_entry(const std::string& entry_path_str,
     std::error_code ec;
     fs::create_directories(dest_path.parent_path(), ec);
     if (ec) {
-        std::cerr << "Błąd tworzenia katalogu dla '" << dest_path << "': " << ec.message() << "\n";
+        std::cerr <<COLOR.ER<< "Błąd tworzenia katalogu dla '"
+                  <<COLOR._2<< dest_path << COLOR.ER<< "': "
+                  <<COLOR._2<< ec.message() << COLOR.NR << std::endl;
         return false;
     }
 
     if (!is_archive_item) {
         fs::path src_path = base_dir / entry_path_str;
         if (!fs::exists(src_path)) {
-            std::cerr << "Brak pliku źródłowego: '" << src_path << "'\n";
+            std::cerr <<COLOR.NR<< "Brak pliku źródłowego: '"
+                      <<COLOR._2<< src_path << COLOR.NR << std::endl;
             return false;
         }
         fs::copy_file(src_path, dest_path, fs::copy_options::overwrite_existing, ec);
         if (ec) {
-            std::cerr << "Nieudane kopiowanie '" << src_path << "' --> '" << dest_path
-                      << "': " << ec.message() << "\n";
+            std::cerr <<COLOR.NR<< "Nieudane kopiowanie '"
+                      <<COLOR._2<< src_path <<COLOR.NR<<"' --> '"
+                      <<COLOR._2<< dest_path <<COLOR.NR<< "': "
+                      <<COLOR._2<< ec.message() << COLOR.NR << std::endl;
             return false;
         }
         return true;
@@ -285,7 +292,8 @@ bool extract_single_entry(const std::string& entry_path_str,
     fs::path full_archive_path = base_dir / archive_rel;
 
     if (!fs::exists(full_archive_path)) {
-        std::cerr << "Brak archiwum źródłowego: '" << full_archive_path << "'\n";
+        std::cerr <<COLOR.ER<< "Brak archiwum źródłowego: '"
+                  <<COLOR._2<< full_archive_path << COLOR.NR << std::endl;
         return false;
     }
 
@@ -324,15 +332,18 @@ bool extract_single_entry(const std::string& entry_path_str,
         when_pipe_errors_logged(error_log_path.string(), entry_path_str,ext.c_str()+1);
         ok = (rc == 0) && fs::exists(dest_path);
     } else {
-        std::cerr << "Nie mogę stworzyć polecenia wypakowującego dla '" << entry_path_str << "'\n";
+        std::cerr <<COLOR.ER<< "Nie mogę stworzyć polecenia wypakowującego dla '"
+                  <<COLOR._2<< entry_path_str << COLOR.NR << std::endl;
     }
 
     ec.clear();
     if (fs::exists(error_log_path, ec)) {
         fs::remove(error_log_path, ec);
         if (ec) {
-            std::cerr << "fs::remove " << error_log_path.string() << " zwróciło kod błędu '"
-                      << ec.message() << "'\n";
+            std::cerr <<COLOR.ER<< "fs::remove "
+                      <<COLOR._2<< error_log_path.string()
+                      <<COLOR.ER<< " zwróciło kod błędu '"
+                      <<COLOR._1<< ec.message() << COLOR.NR << std::endl;
         }
     }
 
@@ -340,11 +351,13 @@ bool extract_single_entry(const std::string& entry_path_str,
 }
 
 void print_usage(const char* prog) {
-    std::cerr << "Program do wydobywania plików wg. listy w formacie tsv (jak w archtool)\n";
+    std::cerr <<COLOR._1<< "Program do wydobywania plików wg. listy w formacie tsv (jak w archtool)\n"<<COLOR.NR;
     std::cerr << "Użycie: " << prog << " <lista.tsv> <katalog_bazowy> <katalog_docelowy>\n";
 }
 
 } // namespace
+
+term_colors COLOR(true);
 
 int main(int argc, char* argv[]) {
     if (argc < 4) {
@@ -357,21 +370,24 @@ int main(int argc, char* argv[]) {
     fs::path target_dir = argv[3];
 
     if (!fs::exists(list_file)) {
-        std::cerr << "Błąd: plik listy nie istnieje: " << list_file << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: plik listy nie istnieje: "
+                  <<COLOR._2<< list_file << COLOR.NR << std::endl;
         return 1;
     }
 
     std::error_code ec;
     fs::create_directories(target_dir, ec);
     if (ec) {
-        std::cerr << "Błąd: nie można utworzyć katalogu docelowego '" << target_dir
-                  << "': " << ec.message() << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: nie można utworzyć katalogu docelowego '"
+                  <<COLOR._2<< target_dir
+                  <<COLOR.ER<< "': " <<COLOR._1<< ec.message() << COLOR.NR << std::endl;
         return 1;
     }
 
     std::ifstream in(list_file);
     if (!in.is_open()) {
-        std::cerr << "Błąd: nie można otworzyć pliku listy: " << list_file << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: nie można otworzyć pliku listy: "
+                  <<COLOR._2<< list_file << COLOR.NR << std::endl;
         return 1;
     }
 
@@ -394,7 +410,9 @@ int main(int argc, char* argv[]) {
             item.seq = entries.size();
             entries.push_back(std::move(item));
         } else {
-            std::cerr << "Uwaga: pominięto niepoprawny wiersz " << line_no << " w " << list_file << "\n";
+            std::cerr <<COLOR.ER<< "Uwaga: pominięto niepoprawny wiersz "
+                      <<COLOR._1<< line_no <<COLOR.ER<< " w "
+                      <<COLOR._2<< list_file << COLOR.NR << std::endl;
         }
     }
     in.close();
@@ -423,7 +441,8 @@ int main(int argc, char* argv[]) {
         fs::path rel_dest = extract_relative_dest_path(item.path_str, is_archive_item);
 
         if (rel_dest.empty()) {
-            std::cerr << "Uwaga: pusta ścieżka docelowa dla wpisu '" << item.path_str << "'\n";
+            std::cerr <<COLOR.ER<< "Uwaga: pusta ścieżka docelowa dla wpisu '"
+                      <<COLOR._2<< item.path_str << COLOR.NR << std::endl;
             ++restored_fail;
             continue;
         }
@@ -450,7 +469,7 @@ int main(int argc, char* argv[]) {
             std::cout<<"\rPlik nr "<<sum<<"         "<<std::flush;
     }
 
-    std::cout << "Ostatecznie dtworzono plików: " << restored_ok
+    std::cout << "Ostatecznie utworzono plików: " << restored_ok
               << ", pominięto identycznych: " << skipped_identical
               << ", błędów: " << restored_fail << std::endl;
 

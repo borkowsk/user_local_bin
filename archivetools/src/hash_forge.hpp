@@ -11,6 +11,11 @@ bool is_tool_available(const std::string& tool_name);
 /// Generowanie unikalnej nazwy pliku błędów dla tej konkretnej instancji programu.
 std::string make_uniq_name(const std::string& base,const std::string& ext,bool in_tmp=true);
 
+/// Zabezpieczanie łańcucha pod kątem wywołania w shellu z zabezpieczeniem na znaki ' znajdujących się we wnętrzu.
+/// @details
+/// Np. łańcuch "Ala$ma'kota" zostaje zmieniony w "'Ala$ma'\''kota'"
+std::string shell_quote(const std::string& s);
+
 /// PROCEDURA SPRAWDZAJĄCA PLIK BŁĘDÓW I PRZEDRUKOWUJĄCA GO NA cerr
 bool when_pipe_errors_logged(const std::string& error_log_path,
                              const std::string& context,
