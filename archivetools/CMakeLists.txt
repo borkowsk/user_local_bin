@@ -14,6 +14,7 @@ add_executable( archivtool
     src/tar_indexer.cpp
     src/hasher.cpp
     src/indexer_main.cpp
+        src/term_colors.h
 )
 
 add_executable( aextractor
@@ -21,6 +22,7 @@ add_executable( aextractor
     src/extractor_main.cpp
     src/arch_extractor.cpp
     src/tool_funcs.cpp
+        src/term_colors.h
 )
 
 add_executable( hashforge
@@ -28,10 +30,12 @@ add_executable( hashforge
     src/hash_forge_main.cpp
     src/tool_funcs.cpp
     src/arch_extractor.cpp
+        src/term_colors.h
 )
 
 add_executable( dupminer
      src/dupl_miner_main.cpp
+        src/term_colors.h
 )
 
 # Kopiowanie skompilowanych plików do katalogu archivetools/ (tam, gdzie leży CMakeLists.txt)
