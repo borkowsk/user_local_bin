@@ -31,6 +31,7 @@ add_executable( hashforge
     src/tool_funcs.cpp
     src/arch_extractor.cpp
         src/term_colors.h
+        src/system_with_guard.cpp
 )
 
 add_executable( dupminer

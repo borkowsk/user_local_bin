@@ -5,6 +5,7 @@
 #include "hash_forge.hpp"
 #include "term_colors.h"
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -12,7 +13,6 @@
 #include <filesystem>
 #include <cstdio>
 #include <array>
-
 
 namespace fs = std::filesystem;
 
@@ -22,6 +22,8 @@ namespace fs = std::filesystem;
 fs::path prepare_file_for_hashing(const std::string& entry_path_str,
                                   const fs::path& base_dir,
                                   const fs::path& target_dir);
+
+
 
 /// Wyświetla informacje o użyciu programu.
 void print_help(const char* prog_name,const char* version=nullptr)
@@ -36,7 +38,7 @@ void print_help(const char* prog_name,const char* version=nullptr)
 
 term_colors COLOR{true}; ///< Klasa udostępniająca kolory, jeśli terminal to umożliwia.
 
-std::string IGNORED="ARJ TAR RAR ZIP 7Z GZ"; ///< Typy, dla których nie robi się hashy (archiwa).
+std::string IGNORED=" ARJ TAR RAR ZIP 7Z GZ TGZ "; ///< Typy, dla których nie robi się hashy (archiwa).
 
 int main(int argc, char* argv[])
 {
@@ -123,7 +125,7 @@ int main(int argc, char* argv[])
 
             // NIE MA SENSU HASH-OWANIE ARCHIWÓW.
             if( !type.empty()
-                &&  IGNORED.find(type) != std::string::npos
+                &&  IGNORED.find(" "+type+" ") != std::string::npos
             )
             {
                 std::cerr<<COLOR.WR<<"Ostrzeżenie: Pominięto plik " //"Warning: Skipped the file "
@@ -172,23 +174,25 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    std::cerr<<COLOR.WR<<"Error opening pipe \'"<<COLOR._2<<cmd<<COLOR.WR<<"'"<<COLOR.NR<<std::endl;
+                    std::cerr<<COLOR.WR<<"Błąd otwarcia potoku '"//"Error opening pipe '"
+                             <<COLOR._2<<cmd<<COLOR.WR<<"'"<<COLOR.NR<<std::endl;
                     perror("popen");
                 }
             }
 
             file_count++;
 
-            if (file_count<100 || file_count % 100 == 0)
+            if (file_count<100 || file_count % 10 == 0)
             {
-                std::cout <<COLOR._1<< "\rOpracowano plików: "<<COLOR._2<< file_count <<COLOR._1<<"..."<<COLOR.NR<< std::flush;
+                std::cout <<COLOR._1<< "\rOpracowano plików: "<<COLOR._2<< file_count <<COLOR._1<<"... "<<COLOR.NR<< std::flush;
             }
 
             std::error_code ec;
             fs::remove(physical_file, ec);
             if(ec)
             {
-                std::cerr<<COLOR.ER<<"fs::remove return error code '"<<COLOR._2<<ec<<COLOR.ER<<"'"<<COLOR.NR<<std::endl;
+                std::cerr<<COLOR.ER<<"Usuwanie pliku zwróciło kod błędu '"//"file remove return error code '"
+                         <<COLOR._2<<ec<<COLOR.ER<<"' "<<COLOR.NR<<std::endl;
             }
             processed_count++;
         }

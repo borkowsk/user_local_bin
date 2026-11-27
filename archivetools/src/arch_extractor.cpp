@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -22,10 +23,33 @@ inline std::string generate_random_prefix() {
     return std::to_string(dis(gen)) + "_";
 }
 
+/// Sprawdza plik, na który skierowano wyjście błędów w kwestii pytania o hasło.
+bool err_contains_password_prompt(const std::string& err_file)
+{
+    std::error_code ec;
+    if (!fs::exists(err_file, ec) || fs::file_size(err_file, ec) == 0) {
+        return false;
+    }
+
+    std::ifstream in(err_file);
+    std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    std::string lower = content;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    return lower.find("password") != std::string::npos ||
+           lower.find("hasło") != std::string::npos ||
+           lower.find("enter password") != std::string::npos ||
+           lower.find("encrypted") != std::string::npos;
+}
+
 /// Funkcja ekstrahująca plik z archiwum.
 /// Przyjmuje ścieżkę z indeksu (np. "dir/file.txt" lub "archive.zip//file.txt")
 /// , katalog bazowy archiwów oraz katalog docelowy.
-fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::path& base_dir, const fs::path& target_dir)
+fs::path prepare_file_for_hashing(const std::string& entry_path_str,
+                                  const fs::path& base_dir,
+                                  const fs::path& target_dir
+                                  )
 {
     size_t separator_pos = entry_path_str.find("//");
     
@@ -94,7 +118,8 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::p
 
     if (!cmd.empty()) {
         //std::cout<<cmd<<std::endl;
-        std::system(cmd.c_str());
+        //std::system(cmd.c_str());
+        system_with_guard(cmd,10,error_log_path,err_contains_password_prompt,"Hashforge");
         when_pipe_errors_logged(error_log_path.string(),entry_path_str,ext.c_str()+1);
         std::error_code ec;
         fs::remove(error_log_path, ec);

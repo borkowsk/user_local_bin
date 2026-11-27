@@ -16,4 +16,11 @@ bool when_pipe_errors_logged(const std::string& error_log_path,
                              const std::string& context,
                              const std::string& tool_name);
 
+int system_with_guard(const std::string& cmd,              ///< Komenda do wykonania.
+                      int timeout_seconds,                 ///< Maksymalny czas wykonania w sekundach.
+                      const std::string& guard_input_file, ///< Nazwa pliku przeznaczonego do testowania.
+                      bool (*guard_fun)(const std::string& guard_input_file), ///< Funkcja testująca plik.
+                      const std::string& master_name=""    ///< Identyfikacja procesu nadrzędnego.
+                     );
+
 #endif // HASH_FORGE_HPP
