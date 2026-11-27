@@ -321,7 +321,7 @@ bool extract_single_entry(const std::string& entry_path_str,
     bool ok = false;
     if (!cmd.empty()) {
         int rc = std::system(cmd.c_str());
-        when_pipe_errors_logged(error_log_path.string(), entry_path_str);
+        when_pipe_errors_logged(error_log_path.string(), entry_path_str,ext.c_str()+1);
         ok = (rc == 0) && fs::exists(dest_path);
     } else {
         std::cerr << "Nie mogę stworzyć polecenia wypakowującego dla '" << entry_path_str << "'\n";
