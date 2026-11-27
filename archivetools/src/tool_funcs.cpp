@@ -2,6 +2,7 @@
 // Created by borkowsk on 25.11.26.
 /// @date 2026 (last modif.)
 
+#include "term_colors.h"
 #include "hash_forge.hpp"
 
 #include <iostream>
@@ -54,10 +55,12 @@ bool when_pipe_errors_logged(const std::string& error_log_path,
             {
                 if(!reported_header)
                 {
-                    std::cerr << "[Błąd/Ostrzeżenie narzędzia "<<tool_name<<" w kontekście '" << context << "']";
+                    std::cerr <<COLOR.WR<< "[Błąd/Ostrzeżenie narzędzia "<<COLOR._2<<tool_name
+                              <<COLOR.WR<<" w kontekście '" <<COLOR._2<< context
+                              <<COLOR.WR<< "']"<<COLOR.NR<<std::flush;
                     reported_header = true;
                 }
-                std::cerr << "  -> " << err_line << "\n";
+                std::cerr << "  -> " <<COLOR.ER<< err_line <<COLOR.NR<<std::endl;
             }
         }
         err_in.close();

@@ -2,6 +2,7 @@
 /// @brief Wypakowywanie pliku z archiwum.
 /// @author GEMINI, under the supervision of W. T. Borkowski
 
+#include "term_colors.h"
 #include "hash_forge.hpp"
 
 #include <string>
@@ -52,8 +53,8 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::p
            fs::copy_file(src_path, dest_path, fs::copy_options::overwrite_existing, ec);
            if(ec)
            {
-               std::cerr<<"Nieudane kopiowanie do katalogu tymczasowego: "<<ec.message()<<std::endl;
-               std::cerr<<src_path<<" --> "<<dest_path<<std::endl;
+               std::cerr<<COLOR.ER<<"Nieudane kopiowanie do katalogu tymczasowego: "<<COLOR._2<<ec.message()<<std::endl;
+               std::cerr<<COLOR._3<<src_path<<COLOR.ER<<" --> "<<COLOR._2<<dest_path<<COLOR.NR<<std::endl;
            }
         }
         //std::cout<<"Zwykły plik:'"<<dest_path<<"'"<<std::endl;
@@ -75,7 +76,7 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::p
     std::string ext = full_archive_path.extension().string();
 
     // Generowanie unikalnej nazwy pliku błędów dla tej konkretnej instancji programu
-    fs::path error_log_path = "./" + make_uniq_name("extraction_err_","txt",false);
+    fs::path error_log_path = "/tmp" + make_uniq_name("extraction_err_","txt",false);
 
     std::string cmd;
     if (filename_lower.find(".tar.gz") != std::string::npos || filename_lower.find(".tgz") != std::string::npos)
@@ -94,17 +95,17 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str, const fs::p
     if (!cmd.empty()) {
         //std::cout<<cmd<<std::endl;
         std::system(cmd.c_str());
-        when_pipe_errors_logged(error_log_path.string(),entry_path_str);
+        when_pipe_errors_logged(error_log_path.string(),entry_path_str,ext.c_str()+1);
         std::error_code ec;
         fs::remove(error_log_path, ec);
         if(ec)
         {
-            std::cerr<<"fs::remove "<<error_log_path.string()<<" zwróciło kod błędu '"<<ec<<"'"<<std::endl;
+            std::cerr<<COLOR.ER<<"fs::remove "<<COLOR._2<<error_log_path.string()<<COLOR.ER<<" zwróciło kod błędu '"<<COLOR._2<<ec<<COLOR.ER<<"'"<<COLOR.NR<<std::endl;
         }
     }
     else
     {
-        std::cerr<<"Nie mogę stworzyć polecenia wypakowującego dla '"<<entry_path_str<<"'"<<std::endl;
+        std::cerr<<COLOR.ER<<"Nie mogę stworzyć polecenia wypakowującego dla '"<<COLOR._2<<entry_path_str<<COLOR.ER<<"'"<<std::endl;
     }
 
     return dest_path;

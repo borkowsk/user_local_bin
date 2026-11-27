@@ -14,6 +14,6 @@ std::string make_uniq_name(const std::string& base,const std::string& ext,bool i
 /// PROCEDURA SPRAWDZAJĄCA PLIK BŁĘDÓW I PRZEDRUKOWUJĄCA GO NA cerr
 bool when_pipe_errors_logged(const std::string& error_log_path,
                              const std::string& context,
-                             const std::string& tool_name="");
+                             const std::string& tool_name);
 
 #endif // HASH_FORGE_HPP

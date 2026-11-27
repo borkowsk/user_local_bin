@@ -3,6 +3,7 @@
 /// @author GEMINI, under the supervision of W. T. Borkowski
 
 #include "hash_forge.hpp"
+#include "term_colors.h"
 
 #include <iostream>
 #include <fstream>
@@ -30,11 +31,16 @@ void print_help(const char* prog_name,const char* version=nullptr)
         std::cout<<"Wersja:"<<version<<std::endl;
     }
     std::cout << "Użycie:\n\t" << prog_name
-              << " <plik_indeksu.tsv> <tlsh|ssdeep|md5 etc> <katalog_bazowy_archiwów>\n";
+              << " <plik_indeksu.tsv> <tlsh|ssdeep|md5|sha256|file> <katalog_bazowy_archiwów>\n";
 }
+
+term_colors COLOR{true}; ///< Klasa udostępniająca kolory, jeśli terminal to umożliwia.
+
+std::string IGNORED="ARJ TAR RAR ZIP 7Z GZ"; ///< Typy, dla których nie robi się hashy (archiwa).
 
 int main(int argc, char* argv[])
 {
+    std::cout<<COLOR._1<<"Program do tworzenia hashy dla listy plików w formacie tsv..."<<COLOR.NR<<std::endl<<std::flush;
     // Wymagamy teraz trzech argumentów (program + 3 parametry)
     if (argc < 4) {
         print_help(argv[0],__TIMESTAMP__);
@@ -50,35 +56,37 @@ int main(int argc, char* argv[])
        && hash_type != "sha256"
        && hash_type != "md5"
        && hash_type != "file" ) {
-        std::cerr << "Błąd: Nieznany rodzaj skrótu. Wybierz 'tlsh','ssdeep','sha256','md5' lub 'file'.\n";
+        std::cerr <<COLOR.ER<< "Błąd: Nieznany rodzaj skrótu. Wybierz 'tlsh','ssdeep','sha256','md5' lub 'file'."<<COLOR.NR<<std::endl;
         return 1;
     }
 
     // Walidacja dostępności zewnętrznego narzędzia CLI
     if (!is_tool_available((hash_type!="md5"?hash_type:hash_type+"sum"))) {
-        std::cerr << "Błąd krytyczny: Narzędzie '" << hash_type << "' nie zostało znalezione w systemie (PATH)!\n";
-        std::cerr << "Upewnij się, że jest zainstalowane i dostępne w zmiennych środowiskowych.\n";
+        std::cerr <<COLOR.ER<< "Błąd krytyczny: Narzędzie '" << hash_type << "' nie zostało znalezione w systemie (PATH)!\n";
+        std::cerr <<COLOR.WR<< "Upewnij się, że jest zainstalowane i dostępne w zmiennych środowiskowych."<<COLOR.NR<<std::endl;
         return 1;
     }
 
     if (!fs::exists(index_tsv_path)) {
-        std::cerr << "Błąd: Podany plik indeksu nie istnieje: " << index_tsv_path << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: Podany plik indeksu nie istnieje: " << index_tsv_path <<COLOR.NR<<std::endl;
         return 1;
     }
 
     if (!fs::exists(base_dir) || !fs::is_directory(base_dir)) {
-        std::cerr << "Błąd: Podany katalog bazowy nie istnieje lub nie jest katalogiem: " << base_dir << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: Podany katalog bazowy nie istnieje lub nie jest katalogiem: " << base_dir <<COLOR.NR<<std::endl;
         return 1;
     }
 
     // Tworzenie nazwy pliku wynikowego (np. indeks.tsv -> indeks.tlsh / indeks.ssdeep)
     // Plik wynikowy ląduje tam, gdzie plik indeksu (lub można to zmienić wg uznania)
-    fs::path output_hash_path = index_tsv_path;
+    fs::path output_hash_path = "/tmp/tymczasem_hashforge_debug"; //DEBUG
+    std::cerr<<COLOR.WR<<"UWAGA ! OUTPUT TYMCZASOWY DLA DEBUGGINGU - TRAFIA DO /tmp !!!"<<COLOR.NR<<std::endl;
+    //fs::path output_hash_path = index_tsv_path; //NORMAL
     output_hash_path.replace_extension("." + hash_type);
 
     std::ofstream out(output_hash_path, std::ios::out | std::ios::trunc);
     if (!out.is_open()) {
-        std::cerr << "Błąd: Nie można utworzyć pliku wynikowego: " << output_hash_path << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: Nie można utworzyć pliku wynikowego: " << output_hash_path <<COLOR.NR<<std::endl;
         return 1;
     }
 
@@ -86,8 +94,8 @@ int main(int argc, char* argv[])
     fs::path error_log_path = make_uniq_name("hashforge_err_","txt");
 
     // Katalog tymczasowy na wypakowywane pliki
-    //fs::path temp_dir = fs::temp_directory_path() / "hashed";
-    fs::path temp_dir = fs::current_path() / "tmp_hashed";
+    fs::path temp_dir = fs::temp_directory_path() / "hashed";
+    //fs::path temp_dir = fs::current_path() / "tmp_hashed";
     fs::create_directories(temp_dir);
 
     std::ifstream in(index_tsv_path);
@@ -96,8 +104,8 @@ int main(int argc, char* argv[])
     // Pomijamy nagłówek TSV
     std::getline(in, line);
 
-    std::cout << "Generowanie skrótów/opisów typu " << hash_type << " na podstawie: " << index_tsv_path << "\n";
-    std::cout << "Katalog bazowy danych: " << base_dir << "\n";
+    std::cout <<COLOR._1<< "Generowanie skrótów/opisów typu " << hash_type << " na podstawie: " << index_tsv_path <<COLOR.NR<<std::endl;
+    std::cout <<COLOR._3<< "Katalog bazowy danych: "<<COLOR._2<< base_dir  <<COLOR.NR<<std::endl;
     std::uintmax_t processed_count = 0;
 
     unsigned file_count=0;
@@ -112,6 +120,18 @@ int main(int argc, char* argv[])
             std::getline(ss, date, '\t') &&
             std::getline(ss, type, '\t') &&
             std::getline(ss, path, '\t')) {
+
+            // NIE MA SENSU HASH-OWANIE ARCHIWÓW.
+            if( !type.empty()
+                &&  IGNORED.find(type) != std::string::npos
+            )
+            {
+                std::cerr<<COLOR.WR<<"Skipped the file "
+                         <<COLOR._1<<"'"<<COLOR._2<<path<<COLOR._1<<"'"
+                         <<COLOR.WR<<" because of type "<<COLOR._1<<"'"<<COLOR._3<<type<<COLOR._1<<"'"<<std::flush;
+                std::cerr<<COLOR.NR<<std::endl;
+                continue;
+            }
 
             // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego "base_dir"
             fs::path physical_file = prepare_file_for_hashing(path, base_dir, temp_dir);
@@ -151,7 +171,7 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    std::cerr<<"Error opening pipe \'"<<cmd<<"'"<<std::endl;
+                    std::cerr<<COLOR.WR<<"Error opening pipe \'"<<COLOR._2<<cmd<<COLOR.WR<<"'"<<COLOR.NR<<std::endl;
                     perror("popen");
                 }
             }
@@ -160,14 +180,14 @@ int main(int argc, char* argv[])
 
             if (file_count<100 || file_count % 100 == 0)
             {
-                std::cout << "\rOpracowano plików: " << file_count << "..." << std::flush;
+                std::cout <<COLOR._1<< "\rOpracowano plików: "<<COLOR._2<< file_count <<COLOR._1<<"..."<<COLOR.NR<< std::flush;
             }
 
             std::error_code ec;
             fs::remove(physical_file, ec);
             if(ec)
             {
-                std::cerr<<"fs::remove return error code '"<<ec<<"'"<<std::endl;
+                std::cerr<<COLOR.ER<<"fs::remove return error code '"<<COLOR._2<<ec<<COLOR.ER<<"'"<<COLOR.NR<<std::endl;
             }
             processed_count++;
         }
@@ -182,8 +202,8 @@ int main(int argc, char* argv[])
     //fs::remove_all(temp_dir, ec); //To może popsuć działanie innej kopii programu!!!
     //if(ec) std::cout<<"fs::remove return error code '"<<ec<<"'"<<std::endl;
 
-    std::cout << "\nZakończono! Przetworzono wpisów: " << processed_count << "\n";
-    std::cout << "Wynik zapisano do: " << output_hash_path << "\n";
+    std::cout <<COLOR._1<< "\nZakończono! Przetworzono wpisów: " <<COLOR._2<< processed_count <<COLOR.NR<< "\n";
+    std::cout <<COLOR._1<< "Wynik zapisano do: " <<COLOR._2<< output_hash_path <<COLOR.NR<<std::endl;
 
     return 0;
 }
