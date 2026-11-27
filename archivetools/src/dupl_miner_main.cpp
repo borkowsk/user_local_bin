@@ -3,6 +3,8 @@
 /// @author GEMINI, under the supervision of W. T. Borkowski
 /// @date 2026-11-11 (created)
 
+#include "term_colors.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -79,6 +81,8 @@ void print_help(const char* prog_name) {
     std::cout << "  " << prog_name << " BARDZO_STARE.hash sha256\n";
 }
 
+term_colors COLOR(true);
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         print_help(argv[0]);
@@ -87,7 +91,8 @@ int main(int argc, char* argv[]) {
 
     fs::path input_file = argv[1];
     if (!fs::exists(input_file)) {
-        std::cerr << "Błąd: Plik wejściowy nie istnieje: " << input_file << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: Plik wejściowy nie istnieje: "
+                  <<COLOR._2<< input_file << COLOR.NR << std::endl;
         return 1;
     }
 
@@ -107,12 +112,13 @@ int main(int argc, char* argv[]) {
         hash_type = "dup";
     }
 
-    // Tworzenie ścieżki wyjściowej: np. BARDZOSTARE.sha256.dup
+    // Tworzenie ścieżki wyjściowej: np. "BARDZO_STARE.sha256.dup"
     fs::path output_file = input_file.parent_path() / (input_file.stem().string() + "." + hash_type + ".dup");
 
     std::ifstream in(input_file);
     if (!in.is_open()) {
-        std::cerr << "Błąd: Nie można otworzyć pliku do odczytu: " << input_file << "\n";
+        std::cerr <<COLOR.ER << "Błąd: Nie można otworzyć pliku do odczytu: "
+                  <<COLOR._2 << input_file <<COLOR.NR<<std::endl;
         return 1;
     }
 
@@ -152,7 +158,8 @@ int main(int argc, char* argv[]) {
 
     std::ofstream out(output_file, std::ios::out | std::ios::trunc);
     if (!out.is_open()) {
-        std::cerr << "Błąd: Nie można otworzyć pliku do zapisu: " << output_file << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: Nie można otworzyć pliku do zapisu: "
+                  <<COLOR._2<< output_file <<COLOR.NR<<std::endl;
         return 1;
     }
 
