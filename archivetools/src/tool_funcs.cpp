@@ -38,6 +38,23 @@ std::string make_uniq_name(const std::string& base,const std::string& ext,bool i
     return  name;
 }
 
+/// Zabezpieczanie łańcucha pod kątem wywołania w shellu z zabezpieczeniem na znaki ' znajdujących się we wnętrzu.
+/// @details
+/// Np. łańcuch "Ala$ma'kota" zostaje zmieniony w "'Ala$ma'\''kota'"
+std::string shell_quote(const std::string& s)
+{
+    std::string out = "'";
+    for (char c : s) {
+        if (c == '\'') {
+            out += "'\\''"; // zamyka ', dokłada \', otwiera '
+        } else {
+            out += c;
+        }
+    }
+    out += "'";
+    return out;
+}
+
 /// PROCEDURA SPRAWDZAJĄCA PLIK BŁĘDÓW I PRZEDRUKOWUJĄCA GO NA cerr
 bool when_pipe_errors_logged(const std::string& error_log_path,
                              const std::string& context,
