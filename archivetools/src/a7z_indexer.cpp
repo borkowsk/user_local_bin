@@ -2,6 +2,7 @@
 /// @brief Obsługa listowania ZIP/RAR/TAR/ARJ/7z.
 /// @author GEMINI, under the supervision of W. T. Borkowski
 
+#include "term_colors.h"
 #include "trim.hpp"
 #include "indexer.hpp"
 
@@ -28,7 +29,8 @@ int process_7z_archive(const fs::path& archive_path, const fs::path& base_dir, s
 #endif
 
     if (!pipe) {
-        std::cerr << "Błąd: Nie udało się uruchomić polecenia dla archiwum 7Z: " << archive_path << "\n";
+        std::cerr <<COLOR.ER<< "Błąd: Nie udało się uruchomić polecenia dla archiwum 7Z: "
+                  <<COLOR._2<< archive_path <<COLOR.NR<<std::endl;
         return 0;
     }
 
