@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Tworzenie nazwy pliku wynikowego (np. indeks.tsv -> indeks.tlsh / indeks.ssdeep)
+    // Tworzenie nazwy pliku wynikowego (np. "indeks.tsv" -na> "indeks.tlsh" / "indeks.ssdeep")
     // Plik wynikowy ląduje tam, gdzie plik indeksu (lub można to zmienić wg uznania)
     fs::path output_hash_path = "/tmp/tymczasem_hashforge_debug"; //DEBUG
     std::cerr<<COLOR.WR<<"UWAGA ! OUTPUT TYMCZASOWY DLA DEBUGGINGU - TRAFIA DO /tmp !!!"<<COLOR.NR<<std::endl;
@@ -126,9 +126,10 @@ int main(int argc, char* argv[])
                 &&  IGNORED.find(type) != std::string::npos
             )
             {
-                std::cerr<<COLOR.WR<<"Skipped the file "
+                std::cerr<<COLOR.WR<<"Ostrzeżenie: Pominięto plik " //"Warning: Skipped the file "
                          <<COLOR._1<<"'"<<COLOR._2<<path<<COLOR._1<<"'"
-                         <<COLOR.WR<<" because of type "<<COLOR._1<<"'"<<COLOR._3<<type<<COLOR._1<<"'"<<std::flush;
+                         <<COLOR.WR<<" ze względu na typ " //" because of type "
+                         <<COLOR._1<<"'"<<COLOR._3<<type<<COLOR._1<<"'"<<std::flush;
                 std::cerr<<COLOR.NR<<std::endl;
                 continue;
             }

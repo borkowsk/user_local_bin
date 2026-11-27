@@ -55,9 +55,9 @@ bool when_pipe_errors_logged(const std::string& error_log_path,
             {
                 if(!reported_header)
                 {
-                    std::cerr <<COLOR.WR<< "[Błąd/Ostrzeżenie narzędzia "<<COLOR._2<<tool_name
+                    std::cerr <<COLOR.WR<< "Błąd/Ostrzeżenie narzędzia "<<COLOR._2<<tool_name
                               <<COLOR.WR<<" w kontekście '" <<COLOR._2<< context
-                              <<COLOR.WR<< "']"<<COLOR.NR<<std::flush;
+                              <<COLOR.WR<< "'"<<COLOR.NR<<std::flush;
                     reported_header = true;
                 }
                 std::cerr << "  -> " <<COLOR.ER<< err_line <<COLOR.NR<<std::endl;
