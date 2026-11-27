@@ -136,22 +136,22 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego "base_dir"
+            // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego "base_dir".
             fs::path physical_file = prepare_file_for_hashing(path, base_dir, temp_dir);
             //if(verbose) std::cout<<path<<" "<<physical_file<<std::endl;
 
             if (fs::exists(physical_file) && fs::file_size(physical_file) > 0) {
                 std::string cmd;
                 if (hash_type == "tlsh") {
-                    cmd = "tlsh -f \"" + physical_file.string() + "\" 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";
+                    cmd = "tlsh -f " + shell_quote(physical_file.string()) + " 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";
                 } else if (hash_type == "ssdeep") {
-                    cmd = "ssdeep -cb \"" + physical_file.string() + "\" 2> " + error_log_path.string() + " | sed '1d'";
+                    cmd = "ssdeep -cb " + shell_quote(physical_file.string()) + " 2> " + error_log_path.string() + " | sed '1d'";
                 } else if (hash_type == "file") {
-                    cmd = "file \"" + physical_file.string() + "\" 2> " + error_log_path.string();
+                    cmd = "file " + shell_quote(physical_file.string()) + " 2> " + error_log_path.string();
                 } else if (hash_type == "md5" || hash_type == "sha256") {
                     // standardowe narzędzia coreutils zwracają: <hash>  <nazwa_pliku>
                     // Używamy sed, aby odciąć wszystko od pierwszej spacji i zostawić sam hash.
-                    cmd = hash_type + "sum \"" + physical_file.string() + "\" 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";
+                    cmd = hash_type + "sum " + shell_quote(physical_file.string()) + " 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";
                 }
 
                 errno=0;
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 
             if (file_count<100 || file_count % 10 == 0)
             {
-                std::cout <<COLOR._1<< "\rOpracowano plików: "<<COLOR._2<< file_count <<COLOR._1<<"... "<<COLOR.NR<< std::flush;
+                std::cout <<COLOR.NR<< "\rOpracowano plików: "<<COLOR._1<< file_count <<COLOR.NR<<"...  "<< std::flush;
             }
 
             std::error_code ec;
