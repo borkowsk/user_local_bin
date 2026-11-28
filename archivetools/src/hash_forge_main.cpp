@@ -136,11 +136,11 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego "base_dir".
-            fs::path physical_file = prepare_file_for_hashing(path, base_dir, temp_dir);
-            //if(verbose) std::cout<<path<<" "<<physical_file<<std::endl;
+            // Przygotowanie fizycznego pliku na dysku (wypakowanie / skopiowanie) z użyciem jawnego base_dir-rectory.
+            fs::path physical_file = prepare_file_for_hashing(path, base_dir, temp_dir); //Jak coś nie wyszło to może też zwrócić pusta ścieżkę.
+            //if(verbose) std::cout<<path<<" -> "<<physical_file<<std::endl;
 
-            if (fs::exists(physical_file) && fs::file_size(physical_file) > 0) {
+            if (!physical_file.empty() && fs::exists(physical_file) && fs::file_size(physical_file) > 0) {
                 std::string cmd;
                 if (hash_type == "tlsh") {
                     cmd = "tlsh -f " + shell_quote(physical_file.string()) + " 2> " + error_log_path.string() + " | sed 's/[[:space:]].*//'";

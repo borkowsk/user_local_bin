@@ -52,7 +52,7 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str,
                                   )
 {
     size_t separator_pos = entry_path_str.find("//");
-    
+
     fs::path filename_to_use;
     bool is_archive_item = (separator_pos != std::string::npos);
 
@@ -108,19 +108,19 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str,
         cmd = "tar -O -xzf " + shell_quote(full_archive_path.string()) + " " + shell_quote(internal_path) + " > " + shell_quote(dest_path.string()) + " 2> " + shell_quote(error_log_path.string());
     } else if (ext == ".tar" || ext == ".TAR") {
         cmd = "tar -O -xf " +  shell_quote(full_archive_path.string()) + " " + shell_quote(internal_path) + " > " + shell_quote(dest_path.string()) + " 2> " + shell_quote(error_log_path.string());
-    } else if (ext == ".zip" || ext == ".ZIP") {
+    } else if (ext == ".zip" || ext == ".ZIP" || ext == ".ZiP" || ext == ".Zip") {
         cmd = "unzip -p " +    shell_quote(full_archive_path.string()) + " " + shell_quote(internal_path) + " > " + shell_quote(dest_path.string()) + " 2> " + shell_quote(error_log_path.string());
-    } else if (ext == ".rar" || ext == ".RAR") {
+    } else if (ext == ".rar" || ext == ".RAR" || ext == ".RaR" || ext == ".Rar") {
         cmd = "unrar p -inul "+shell_quote(full_archive_path.string()) + " " + shell_quote(internal_path) + " > " + shell_quote(dest_path.string()) + " 2> " + shell_quote(error_log_path.string());
     } else if (ext == ".7z" || ext == ".7Z") {
         cmd = "7z e -so " +    shell_quote(full_archive_path.string()) + " " + shell_quote(internal_path) + " > " + shell_quote(dest_path.string()) + " 2> " + shell_quote(error_log_path.string());
     }
-
+    bool fail=false;
     if (!cmd.empty()) {
         //std::cout<<cmd<<std::endl;
         //std::system(cmd.c_str());
-        auto tmp=system_with_guard(cmd,10,error_log_path,err_contains_password_prompt,"Hashforge");
-        when_pipe_errors_logged(error_log_path.string(),entry_path_str,ext.c_str()+1);
+        auto tmp=system_with_guard(cmd,10,error_log_path,err_contains_password_prompt,"Hashforge"); if(tmp<0) { std::cerr<<COLOR.ER<<"Nie udało się wypakować pliku '"<<COLOR._2<<full_archive_path<<COLOR.ER<<"'"<<COLOR.NR<<std::endl; fail=true;}
+        when_pipe_errors_logged(error_log_path.string(),entry_path_str,ext.c_str()+1); //To nie odróżnia ostrzeń od błędów więc się nie da...
         std::error_code ec;
         fs::remove(error_log_path, ec);
         if(ec)
@@ -133,5 +133,5 @@ fs::path prepare_file_for_hashing(const std::string& entry_path_str,
         std::cerr<<COLOR.ER<<"Nie mogę stworzyć polecenia wypakowującego dla '"<<COLOR._2<<entry_path_str<<COLOR.ER<<"'"<<std::endl;
     }
 
-    return dest_path;
+    return !fail?dest_path:"";
 }

@@ -85,7 +85,7 @@ bool when_pipe_errors_logged(const std::string& error_log_path,
         // Czyścimy plik błędów po odczytaniu, żeby nie kumulować śmieci z poprzednich iteracji
         std::ofstream clear_err(error_log_path, std::ios::trunc);
         clear_err.close();
-        return true; //Były jakieś błędy.
+        return true; //Były jakieś błędy lub ostrzeżenia
     }
 
     return false;
